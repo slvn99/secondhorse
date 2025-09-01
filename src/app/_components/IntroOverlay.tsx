@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 
@@ -15,7 +15,22 @@ export default function IntroOverlay() {
     setFading(true);
     // Delay unmount to allow fade-out animation
     setTimeout(() => setOpen(false), 400);
+    try {
+      localStorage.setItem("tfh_intro_seen_at", String(Date.now()));
+    } catch {}
   };
+
+  // Show only once per hour
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tfh_intro_seen_at");
+      const last = raw ? Number(raw) : 0;
+      const hour = 60 * 60 * 1000;
+      if (last && Date.now() - last < hour) {
+        setOpen(false);
+      }
+    } catch {}
+  }, []);
 
   const disabled = !!(pathname && pathname.startsWith("/new"));
   if (disabled || !open) return null;

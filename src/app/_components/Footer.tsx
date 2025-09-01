@@ -36,9 +36,9 @@ export default function Footer() {
     >
       <div className="mx-auto flex flex-col sm:flex-row sm:h-12 max-w-6xl items-center justify-center sm:justify-between px-3 text-xs sm:text-sm py-2 gap-1 sm:gap-0">
         <div className="flex items-center gap-2">
-          <span>SLVN</span>
+          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">SLVN</a>
           <span className="text-neutral-500">•</span>
-          <span>&copy; {new Date().getFullYear()}</span>
+          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">&copy; {new Date().getFullYear()}</a>
           <span className="hidden sm:inline text-neutral-500">•</span>
           <span className="hidden sm:inline">All rights reserved</span>
         </div>

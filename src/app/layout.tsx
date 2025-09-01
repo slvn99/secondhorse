@@ -6,6 +6,7 @@ import MatchesSidebar from "./_components/MatchesSidebar";
 import IntroOverlay from "./_components/IntroOverlay";
 import Footer from "./_components/Footer";
 import Toast from "./_components/Toast";
+import CookieBanner from "./_components/CookieBanner";
 import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import styles from "./tinder-layout.module.css";
 
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         {toast && <Toast message={toast.message} type={(toast.type as any) || "info"} />}
+        <CookieBanner />
         <div className={`relative flex h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden ${styles.scope}`}>
           <IntroOverlay />
           <MatchesSidebar />
@@ -72,6 +74,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 ultimate vibe code setup
               </a>
               . Created on {created}.
+            </p>
+            <p className="text-[11px] leading-relaxed text-neutral-400">
+              <a href="/privacy" className="underline hover:text-neutral-200">Privacy note</a>
+            </p>
+            <p className="text-[11px] leading-relaxed text-neutral-400">
+              <a href="/trademark-and-parody" className="underline hover:text-neutral-200">Trademark &amp; parody note</a>
             </p>
           </div>
         }
