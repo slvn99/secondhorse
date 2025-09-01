@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import CollapsibleSidebar from "./_components/CollapsibleSidebar";
 import MatchesSidebar from "./_components/MatchesSidebar";
@@ -23,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Read one-time toast from cookie if present
   let toast: { type: "success" | "error" | "info"; message: string } | null = null;
   try {
-    const raw = (await import("next/headers")).cookies().get("tfh_notice")?.value;
+    const raw = cookies().get("tfh_notice")?.value;
     if (raw) toast = JSON.parse(raw);
   } catch {}
 

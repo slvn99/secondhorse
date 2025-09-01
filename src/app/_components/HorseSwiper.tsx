@@ -56,11 +56,17 @@ export default function HorseSwiper({
 
   const controlled = useMemo(() => typeof index === "number" && !!onIndexChange, [index, onIndexChange]);
   const currentIndex = controlled ? (index as number) : internalIndex;
-  const setIndex = (updater: number | ((prev: number) => number)) => { if (controlled) { const next = typeof updater === "function" ? (updater as (p: number) => number)(currentIndex) : updater; onIndexChange?.(next); } else { setInternalIndex(updater as any); } };
+  const incrementIndex = useCallback(() => {
+    if (controlled) {
+      onIndexChange?.(currentIndex + 1);
+    } else {
+      setInternalIndex((p) => p + 1);
+    }
+  }, [controlled, onIndexChange, currentIndex]);
   useEffect(() => { if (!controlled) setInternalIndex(0); }, [deck, controlled]);
   useEffect(() => { setPhotoIdx(0); }, [currentIndex]);
 
-  const handleChoice = useCallback((liked: boolean) => { setDirection(liked ? "right" : "left"); setTimeout(() => { onRate?.(deck[currentIndex], liked); setIndex((prev) => prev + 1); setDirection(null); }, 300); }, [onRate, deck, currentIndex, setIndex]);
+  const handleChoice = useCallback((liked: boolean) => { setDirection(liked ? "right" : "left"); setTimeout(() => { onRate?.(deck[currentIndex], liked); incrementIndex(); setDirection(null); }, 300); }, [onRate, deck, currentIndex, incrementIndex]);
   useEffect(() => { if (!controlsRef) return; controlsRef.current = { like: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(true); }, dislike: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(false); }, canAct: () => direction === null && currentIndex < deck.length }; }, [controlsRef, direction, currentIndex, deck.length, handleChoice]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => { if (direction !== null) return; startX.current = e.clientX; startY.current = e.clientY; setDragging(true); try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch {} };
