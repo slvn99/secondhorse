@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
-import type { Horse } from "../_lib/horses";
+import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
-import { useTfhMatches, useDeckIndex } from "../_lib/tfh";
+import { useTfhMatches, useDeckIndex } from "@/lib/tfh";
 
 export default function TfhClient({ horses }: { horses: Horse[] }) {
   const baseList = useMemo(() => horses ?? [], [horses]);
@@ -33,4 +33,3 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     </div>
   );
 }
-

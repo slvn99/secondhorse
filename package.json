@@ -10,11 +10,15 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-brands-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^3.0.2",
     "@vercel/analytics": "^1.5.0",
     "clsx": "^2.1.1",
     "next": "^15.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

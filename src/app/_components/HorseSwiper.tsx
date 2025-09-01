@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import Image from "next/image";
 import clsx from "clsx";
-import { horses as allHorses } from "../_lib/horses";
-import type { Horse } from "../_lib/horses";
-import { TFH_EVENTS } from "../_lib/tfh";
+import { horses as allHorses } from "@/lib/horses";
+import type { Horse } from "@/lib/horses";
+import { TFH_EVENTS } from "@/lib/tfh";
 
 export default function HorseSwiper({
   onRate,
@@ -168,11 +168,16 @@ export default function HorseSwiper({
 
       {showActions && (
         <div className="grid grid-cols-2 gap-4 mt-2">
-          <button onClick={() => handleChoice(false)} className="rounded-full bg-red-600 text-white px-4 py-2">Nope</button>
-          <button onClick={() => handleChoice(true)} className="rounded-full bg-green-600 text-white px-4 py-2">Like</button>
+          <button onClick={() => handleChoice(false)} className="rounded-full bg-red-600/90 hover:bg-red-600 text-white px-4 py-2 flex items-center justify-center gap-2" aria-label="Dislike">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M6.225 4.811a.75.75 0 0 1 1.06 0L12 9.525l4.715-4.714a.75.75 0 1 1 1.06 1.06L13.06 10.586l4.715 4.714a.75.75 0 1 1-1.06 1.06L12 11.646l-4.715 4.714a.75.75 0 1 1-1.06-1.06l4.714-4.714-4.714-4.715a.75.75 0 0 1 0-1.06Z"/></svg>
+            <span className="sr-only">Nope</span>
+          </button>
+          <button onClick={() => handleChoice(true)} className="rounded-full bg-green-600/90 hover:bg-green-600 text-white px-4 py-2 flex items-center justify-center gap-2" aria-label="Like">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M11.645 20.91a.75.75 0 0 0 .71 0c1.2-.659 2.33-1.44 3.39-2.31 2.37-1.94 4.26-4.15 5.21-6.5.95-2.36.79-5.12-1.06-6.97-1.47-1.47-3.9-1.95-5.91-.21-.4.35-.76.77-1.08 1.25-.32-.48-.68-.9-1.08-1.25-2.01-1.74-4.44-1.26-5.91.21-1.85 1.85-2.01 4.61-1.06 6.97.95 2.35 2.84 4.56 5.21 6.5 1.06.87 2.2 1.65 3.39 2.31Z"/></svg>
+            <span className="sr-only">Like</span>
+          </button>
         </div>
       )}
     </div>
   );
 }
-

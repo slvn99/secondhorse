@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { Metadata } from "next";
-import type { Horse } from "./_lib/horses";
-import { mockHorses } from "./_lib/horses";
+import type { Horse } from "@/lib/horses";
+import { horses as localHorses } from "@/lib/horses";
 import TfhClient from "./_components/TfhClient";
 
 export const metadata: Metadata = {
@@ -72,7 +72,7 @@ async function loadHorsesFromDb(): Promise<Horse[]> {
 
 export default async function SecondHorsePage() {
   const dbHorses = await loadHorsesFromDb();
-  const horses = dbHorses.length ? dbHorses : mockHorses;
+  const horses = dbHorses.length ? dbHorses : localHorses;
   return (
     <div className="relative w-full overflow-hidden h-[calc(100svh-var(--nav-height,3rem)-var(--footer-height,3rem))]">
       <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority />

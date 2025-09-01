@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import type { Horse } from "../_lib/horses";
+import type { Horse } from "@/lib/horses";
 
 export default function MatchesView({ matches }: { matches: Horse[] }) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
@@ -68,4 +68,3 @@ export default function MatchesView({ matches }: { matches: Horse[] }) {
     </div>
   );
 }
-
