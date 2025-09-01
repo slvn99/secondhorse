@@ -10,6 +10,7 @@ import Toast from "./_components/Toast";
 import CookieBanner from "./_components/CookieBanner";
 import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import styles from "./tinder-layout.module.css";
+import { Analytics } from "@vercel/analytics/react";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const created = "2025-02-25"; // visible creation date label
@@ -93,6 +94,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }
           />
         </div>
+        <Analytics />
         <Footer />
       </body>
     </html>

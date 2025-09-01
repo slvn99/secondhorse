@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Horse } from "@/lib/horses";
 
-export default function MatchesView({ matches }: { matches: Horse[] }) {
+export default function MatchesView({ matches, onRemove }: { matches: Horse[]; onRemove?: (name: string) => void }) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
 
   useEffect(() => {
@@ -29,7 +29,14 @@ export default function MatchesView({ matches }: { matches: Horse[] }) {
             <p className="mt-2 font-semibold">{horse.name}, {horse.age}</p>
             <p className="text-xs text-gray-400">{horse.gender} • {horse.heightCm} cm</p>
             <p className="text-xs text-gray-400">{horse.breed} • {horse.location}</p>
-            <span className="mt-2 text-xs text-neutral-300 underline">View full profile</span>
+            <div className="mt-2 flex items-center justify-between w-full">
+              <span className="text-xs text-neutral-300 underline">View full profile</span>
+              {onRemove && (
+                <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(horse.name); }} className="text-[11px] text-red-300 hover:text-red-200 underline">
+                  Remove
+                </button>
+              )}
+            </div>
           </button>
         ))}
       </div>

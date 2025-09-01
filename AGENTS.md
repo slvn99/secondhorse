@@ -51,3 +51,8 @@ Security & Configuration Tips
 Troubleshooting
 ---------------
 - Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node ≥ 18.18 or 20.x.
+
+Moderation
+----------
+- Profiles are reviewed by a human via an external dashboard: https://samvannoord.nl/moderation.
+- The app sets a toast after submissions; moderation status is not synced back automatically.

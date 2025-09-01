@@ -73,6 +73,21 @@ export default function HorseSwiper({
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => { if (!dragging || startX.current === null || startY.current === null) return; setDx(e.clientX - startX.current); setDy(e.clientY - startY.current); };
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => { if (!dragging) return; try { (e.currentTarget as any).releasePointerCapture?.(e.pointerId); } catch {} setDragging(false); const threshold = 50; if (dx > threshold) { setDx(0); setDy(0); handleChoice(true); return; } if (dx < -threshold) { setDx(0); setDy(0); handleChoice(false); return; } setDx(0); setDy(0); };
 
+  // Prefetch next card's primary image for smoother swipes
+  useEffect(() => {
+    const next = deck[currentIndex + 1];
+    if (!next) return;
+    const nextUrl = Array.isArray(next.photos) && next.photos.length > 0 ? String(next.photos[0]) : String(next.image || "");
+    if (!nextUrl) return;
+    const isHttp = /^https?:\/\//.test(nextUrl);
+    if (isHttp && typeof window !== "undefined" && (window as any).Image) {
+      try {
+        const pre = new window.Image();
+        pre.src = nextUrl;
+      } catch {}
+    }
+  }, [currentIndex, deck]);
+
   if (currentIndex >= deck.length) {
     return (
       <div className="text-center space-y-4 text-white py-10">
@@ -195,12 +210,12 @@ export default function HorseSwiper({
           <div className="absolute inset-0 bg-black/70" onClick={() => setShowPhoto(false)} aria-hidden="true" />
           <div className="relative z-10 w-[92vw] max-w-3xl">
             <div className="bg-neutral-900/95 backdrop-blur p-2 sm:p-3 rounded-2xl border border-gray-700 shadow-2xl text-left">
-              {/^https?:\/\//.test(gallery[photoIdx]) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} className="rounded-lg w-full h-auto" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
-              ) : (
-                <Image src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} width={1200} height={800} className="rounded-lg w-full h-auto" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
-              )}
+        {/^https?:\/\//.test(gallery[photoIdx]) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} className="rounded-lg w-full h-auto" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+        ) : (
+          <Image src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} width={1200} height={800} className="rounded-lg w-full h-auto" placeholder="blur" blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+        )}
               <div className="mt-3 flex justify-between gap-2">
                 <button type="button" onClick={() => setShowPhoto(false)} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Close</button>
                 {gallery.length > 1 && (<div className="flex items-center gap-2"><button type="button" onClick={() => setPhotoIdx((i) => (i > 0 ? i - 1 : gallery.length - 1))} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Prev</button><button type="button" onClick={() => setPhotoIdx((i) => (i + 1) % gallery.length)} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Next</button></div>)}

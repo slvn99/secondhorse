@@ -77,8 +77,15 @@ export function useTfhMatches(baseList: Horse[]) {
   }, [persist]);
 
   const clearMatches = useCallback(() => { setMatches([]); persist([]); }, [persist]);
+  const removeMatch = useCallback((name: string) => {
+    setMatches((prev) => {
+      const next = prev.filter((h) => h.name !== name);
+      persist(next);
+      return next;
+    });
+  }, [persist]);
 
-  return { matches, setMatches, addMatch, clearMatches } as const;
+  return { matches, setMatches, addMatch, removeMatch, clearMatches } as const;
 }
 
 export type GenderFilter = "All" | "Mare" | "Stallion" | "Gelding";

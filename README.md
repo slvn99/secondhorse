@@ -20,9 +20,9 @@ Notes
 - This variant mounts the app at `/`. The profile creation page is at `/new`.
 - All imports are relative; no `@/*` alias is required.
 - The UI text uses the product name “Second Horse Dating”. The phrase “tinder for horses” may appear in tagline copy only.
+- Moderation dashboard: approvals happen via https://samvannoord.nl/moderation (human review before publishing).
 
 Troubleshooting
 - Error "Cannot find module './586.js'" from `.next/server/...` usually means a stale or corrupted Next.js build cache. Run `npm run clean` and restart dev (`npm run dev`). If it persists, `npm run reset` to reinstall deps and rebuild.
 - Ensure Node >= 18.18 or 20.x.
 - On Windows, disable antivirus/file-sync locks on `.next/` while running dev.
-
