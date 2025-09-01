@@ -1,0 +1,13 @@
+.scope {
+  /* Scope utility class for any CSS module scoping needs */
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-fade-out {
+  animation: fade-out 0.6s ease forwards;
+}
+
