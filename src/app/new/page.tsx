@@ -48,7 +48,7 @@ async function allowedHost(h: Headers): Promise<boolean> {
   return !!((originHost && allowedHosts.includes(originHost)) || (refererHost && allowedHosts.includes(refererHost)) || (host && allowedHosts.includes(host)));
 }
 
-export async function create(formData: FormData) {
+async function create(formData: FormData) {
   "use server";
   const hdrs = await headers();
   const ok = await allowedHost(hdrs as unknown as Headers);
@@ -288,4 +288,3 @@ export default async function NewProfilePage() {
     </div>
   );
 }
-

@@ -1,8 +1,10 @@
 import React from "react";
+import type { Metadata } from "next";
 import "./globals.css";
 import CollapsibleSidebar from "./_components/CollapsibleSidebar";
 import MatchesSidebar from "./_components/MatchesSidebar";
 import IntroOverlay from "./_components/IntroOverlay";
+import Footer from "./_components/Footer";
 import styles from "./tinder-layout.module.css";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -55,7 +57,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }
           />
         </div>
+        <Footer />
       </body>
     </html>
   );
 }
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+};

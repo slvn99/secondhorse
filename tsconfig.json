@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "src/app/_lib/uploads.ts",
-    "src/app/new/**/*"
+    "src/app/new/**/*",
+    "v2/**/*"
   ]
 }
