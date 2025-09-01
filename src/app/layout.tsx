@@ -24,7 +24,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Read one-time toast from cookie if present
   let toast: { type: "success" | "error" | "info"; message: string } | null = null;
   try {
-    const raw = cookies().get("tfh_notice")?.value;
+    const ck = await cookies();
+    const raw = ck.get("tfh_notice")?.value;
     if (raw) toast = JSON.parse(raw);
   } catch {}
 
