@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { horses as allHorses } from "@/lib/horses";
@@ -31,17 +31,17 @@ export default function HorseSwiper({
   const [deck, setDeck] = useState(baseList);
 
   const [seed, setSeed] = useState<string | null>(null);
-  const xmur3 = (str: string) => {
+  const xmur3 = useCallback((str: string) => {
     let h = 1779033703 ^ str.length;
     for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
     return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return (h ^= h >>> 16) >>> 0; };
-  };
-  const mulberry32 = (a: number) => () => { let t = (a += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  const scoreFor = (name: string, s: string) => { const seedFn = xmur3(`${s}|${name}`); const rnd = mulberry32(seedFn()); return rnd(); };
+  }, []);
+  const mulberry32 = useCallback((a: number) => () => { let t = (a += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }, []);
+  const scoreFor = useCallback((name: string, s: string) => { const seedFn = xmur3(`${s}|${name}`); const rnd = mulberry32(seedFn()); return rnd(); }, [xmur3, mulberry32]);
 
   useEffect(() => { try { let s = localStorage.getItem("tfh_seed"); if (!s) { s = Math.random().toString(36).slice(2); localStorage.setItem("tfh_seed", s); } setSeed(s); } catch { setSeed("default"); } }, []);
   useEffect(() => { const onReset = () => { let s = Math.random().toString(36).slice(2); try { localStorage.setItem("tfh_seed", s); } catch {} setSeed(s); }; window.addEventListener("tfh:reset", onReset as EventListener); return () => window.removeEventListener("tfh:reset", onReset as EventListener); }, []);
-  useEffect(() => { if (!seed) { setDeck(baseList); return; } const arr = [...baseList].sort((a, b) => scoreFor(a.name, seed) - scoreFor(b.name, seed)); setDeck(arr); }, [baseList, seed]);
+  useEffect(() => { if (!seed) { setDeck(baseList); return; } const arr = [...baseList].sort((a, b) => scoreFor(a.name, seed) - scoreFor(b.name, seed)); setDeck(arr); }, [baseList, seed, scoreFor]);
 
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
@@ -57,11 +57,11 @@ export default function HorseSwiper({
   const controlled = useMemo(() => typeof index === "number" && !!onIndexChange, [index, onIndexChange]);
   const currentIndex = controlled ? (index as number) : internalIndex;
   const setIndex = (updater: number | ((prev: number) => number)) => { if (controlled) { const next = typeof updater === "function" ? (updater as (p: number) => number)(currentIndex) : updater; onIndexChange?.(next); } else { setInternalIndex(updater as any); } };
-  useEffect(() => { if (!controlled) setInternalIndex(0); }, [deck]);
+  useEffect(() => { if (!controlled) setInternalIndex(0); }, [deck, controlled]);
   useEffect(() => { setPhotoIdx(0); }, [currentIndex]);
 
-  const handleChoice = (liked: boolean) => { setDirection(liked ? "right" : "left"); setTimeout(() => { onRate?.(deck[currentIndex], liked); setIndex((prev) => prev + 1); setDirection(null); }, 300); };
-  useEffect(() => { if (!controlsRef) return; controlsRef.current = { like: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(true); }, dislike: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(false); }, canAct: () => direction === null && currentIndex < deck.length }; }, [controlsRef, direction, currentIndex, deck.length]);
+  const handleChoice = useCallback((liked: boolean) => { setDirection(liked ? "right" : "left"); setTimeout(() => { onRate?.(deck[currentIndex], liked); setIndex((prev) => prev + 1); setDirection(null); }, 300); }, [onRate, deck, currentIndex, setIndex]);
+  useEffect(() => { if (!controlsRef) return; controlsRef.current = { like: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(true); }, dislike: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(false); }, canAct: () => direction === null && currentIndex < deck.length }; }, [controlsRef, direction, currentIndex, deck.length, handleChoice]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => { if (direction !== null) return; startX.current = e.clientX; startY.current = e.clientY; setDragging(true); try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch {} };
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => { if (!dragging || startX.current === null || startY.current === null) return; setDx(e.clientX - startX.current); setDy(e.clientY - startY.current); };
