@@ -63,7 +63,8 @@ export function useTfhMatches(baseList: Horse[]) {
       } else {
         localStorage.removeItem(TFH_STORAGE.MATCHES);
       }
-      dispatch(TFH_EVENTS.MATCHES);
+      // Defer event to avoid setState during render warnings across siblings
+      setTimeout(() => dispatch(TFH_EVENTS.MATCHES), 0);
     } catch {}
   }, []);
 

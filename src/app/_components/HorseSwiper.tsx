@@ -124,7 +124,11 @@ export default function HorseSwiper({
   }
 
   const horse = deck[currentIndex];
-  const gallery = Array.isArray(horse?.photos) && horse!.photos.length > 0 ? (horse!.photos as string[]) : [horse?.image ?? "/TFH/Tinder-for-Horses-cover-image.png"]; 
+  const defaultImg = "/TFH/Tinder-for-Horses-cover-image.png";
+  const rawGallery = Array.isArray(horse?.photos) && horse!.photos.length > 0 ? (horse!.photos as string[]) : [horse?.image ?? ""];
+  const gallery = rawGallery.map((u) => (typeof u === "string" ? u.trim() : "")).filter((u) => !!u);
+  if (gallery.length === 0) gallery.push(defaultImg);
+  const safeIdx = Math.max(0, Math.min(photoIdx, gallery.length - 1));
   const shortDesc = horse.description;
   const previewInterests = horse.interests.slice(0, 3);
   const previewDisciplines = horse.disciplines.slice(0, 2);
@@ -147,19 +151,19 @@ export default function HorseSwiper({
         onPointerCancel={onPointerUp}
         style={direction ? undefined : { transform: `translate(${dx}px, ${dy * 0.2}px) rotate(${Math.max(-15, Math.min(15, dx / 12))}deg)`, cursor: dragging ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
       >
-        {/^https?:\/\//.test(gallery[photoIdx]) ? (
+        {/^https?:\/\//.test(gallery[safeIdx]) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+          <img src={gallery[safeIdx]} alt={`Photo of ${horse.name}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = defaultImg; } } catch {} }} />
         ) : (
-          <Image src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} fill sizes="(max-width: 640px) 90vw, (max-width: 768px) 28rem, (max-width: 1024px) 32rem, 36rem" className="object-cover" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+          <Image src={gallery[safeIdx] || defaultImg} alt={`Photo of ${horse.name}`} fill sizes="(max-width: 640px) 90vw, (max-width: 768px) 28rem, (max-width: 1024px) 32rem, 36rem" className="object-cover" />
         )}
         {gallery.length > 1 && (
           <>
             <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-              <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i > 0 ? i - 1 : gallery.length - 1)); }} onPointerDown={(e) => e.stopPropagation()}>
+                <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i > 0 ? i - 1 : gallery.length - 1)); }} onPointerDown={(e) => e.stopPropagation()}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M15.78 4.22a.75.75 0 0 1 0 1.06L9.06 12l6.72 6.72a.75.75 0 1 1-1.06 1.06l-7.25-7.25a.75.75 0 0 1 0-1.06l7.25-7.25a.75.75 0 0 1 1.06 0z" clipRule="evenodd" /></svg>
               </button>
-              <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i + 1) % gallery.length); }} onPointerDown={(e) => e.stopPropagation()}>
+                <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i + 1) % gallery.length); }} onPointerDown={(e) => e.stopPropagation()}>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M8.22 19.78a.75.75 0 0 1 0-1.06L14.94 12 8.22 5.28a.75.75 0 1 1 1.06-1.06l7.25 7.25a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0z" clipRule="evenodd" /></svg>
               </button>
             </div>
