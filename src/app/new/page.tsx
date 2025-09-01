@@ -219,15 +219,7 @@ export default async function NewProfilePage() {
         <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-neutral-950/85 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/60 border-b border-neutral-800/60">
           <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
             <h1 className="text-xl sm:text-2xl font-semibold">Add Horse Profile</h1>
-            <div className="flex items-center gap-2">
-              <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
-              <button type="submit" form="tfh-new-form" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
-                <span className="inline-flex items-center gap-2">
-                  <svg className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
-                  <span data-label>Save</span>
-                </span>
-              </button>
-            </div>
+            <div className="flex items-center gap-3" />
           </div>
         </div>
 
@@ -235,6 +227,9 @@ export default async function NewProfilePage() {
           {notice && notice.type === "error" && (<div className="rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm">{notice.message}</div>)}
           <div id="tfh-form-error" className="hidden rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm"></div>
           <p className="text-sm text-neutral-400">Fields marked with <span className="text-yellow-400">*</span> are required. Others are optional.</p>
+          <div className="mt-2 rounded-md border border-yellow-700/40 bg-yellow-900/20 text-yellow-100 px-3 py-2 text-xs">
+            All profiles are reviewed by a human before publishing. Submissions may take up to 24 hours.
+          </div>
 
           <div className="rounded-2xl border border-yellow-700/50 bg-yellow-900/10 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Basic Info</h2>
@@ -286,6 +281,24 @@ export default async function NewProfilePage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-green-700/40 bg-green-900/10 p-4">
+            <h2 className="text-lg font-semibold text-neutral-200">Verification</h2>
+            <p className="text-xs text-neutral-400 mt-1">Help us prevent spam by completing the captcha.</p>
+            <div className="mt-3">
+              <div className="h-captcha" data-sitekey="feb4b2b0-056c-4444-b752-faf436125ec0" data-theme="dark"></div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
+            <button type="submit" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
+              <span className="inline-flex items-center gap-2">
+                <svg className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
+                <span data-label>Save</span>
+              </span>
+            </button>
           </div>
 
         </form>

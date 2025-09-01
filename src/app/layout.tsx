@@ -5,6 +5,7 @@ import CollapsibleSidebar from "./_components/CollapsibleSidebar";
 import MatchesSidebar from "./_components/MatchesSidebar";
 import IntroOverlay from "./_components/IntroOverlay";
 import Footer from "./_components/Footer";
+import Toast from "./_components/Toast";
 import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import styles from "./tinder-layout.module.css";
 
@@ -18,9 +19,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const version = shortFromGit ? `git-${shortFromGit}` : shortFromEnv ? `git-${shortFromEnv}` : "v0.1";
   const lastUpdated = dateFromGit || created;
 
+  // Read one-time toast from cookie if present
+  let toast: { type: "success" | "error" | "info"; message: string } | null = null;
+  try {
+    const raw = (await import("next/headers")).cookies().get("tfh_notice")?.value;
+    if (raw) toast = JSON.parse(raw);
+  } catch {}
+
   return (
     <html lang="en">
       <body>
+        {toast && <Toast message={toast.message} type={(toast.type as any) || "info"} />}
         <div className={`relative flex h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden ${styles.scope}`}>
           <IntroOverlay />
           <MatchesSidebar />
@@ -42,14 +51,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </p>
             </div>
             <p className="text-xs leading-relaxed">
-              Second Horse Dating is a small demo. It's for me to fiddle around with AI code generation and the pipeline I've created for it.
+              Second Horse Dating is a small demo. It&#39;s for me to fiddle around with AI code generation and the pipeline I&#39;ve created for it.
             </p>
             <p className="text-xs leading-relaxed">
               I use Codex Web and Codex CLI to see how much I can automate: creating files, matching styles, and making small, safe changes.
             </p>
             <p className="text-xs leading-relaxed">The goal is straightforward: create more amazing stuff in less time.</p>
             <p className="text-xs leading-relaxed">
-              p.s. this application actually took a bit more time than just a few prompts to create. I haven't written any code myself, but I have spent days just prompting away, getting feature requests from friends and just creating something that I can actually be a bit proud of.
+              p.s. this application actually took a bit more time than just a few prompts to create. I haven&#39;t written any code myself, but I have spent days just prompting away, getting feature requests from friends and just creating something that I can actually be a bit proud of.
             </p>
             <hr className="my-3 border-neutral-800" />
             <p className="text-[11px] leading-relaxed text-neutral-400">
@@ -82,4 +91,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };

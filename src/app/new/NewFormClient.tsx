@@ -7,7 +7,22 @@ export default function NewFormClient() {
     const form = document.getElementById("tfh-new-form") as HTMLFormElement | null;
     const btn = document.getElementById("tfh-save-btn") as HTMLButtonElement | null;
     if (!form || !btn) return;
-    const onSubmit = () => {
+    const onSubmit = (ev: Event) => {
+      // Require hCaptcha completion if widget is present
+      const tokenEl = document.querySelector<HTMLTextAreaElement>('textarea[name="h-captcha-response"]');
+      const errBox = document.getElementById("tfh-form-error");
+      const hasWidget = !!document.querySelector<HTMLElement>('.h-captcha');
+      const token = tokenEl?.value?.trim();
+      if (hasWidget && !token) {
+        ev.preventDefault();
+        if (errBox) {
+          errBox.textContent = "Please complete the captcha before submitting.";
+          errBox.classList.remove("hidden");
+        }
+        try { (window as any).hcaptcha?.execute?.(); } catch {}
+        return;
+      }
+      if (errBox) errBox.classList.add("hidden");
       const spinner = btn.querySelector("[data-spinner]") as HTMLElement | null;
       const label = btn.querySelector("[data-label]") as HTMLElement | null;
       if (spinner) spinner.classList.remove("hidden");
