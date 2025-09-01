@@ -79,6 +79,17 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     } catch {}
   }, [baseList]);
 
+  const undoLast = () => {
+    if (index > 0) {
+      setIndex(index - 1);
+      const la = lastAction.current;
+      if (la?.liked) removeMatch(la.horse.name);
+      lastAction.current = null;
+      try { localStorage.removeItem("tfh_last_action"); } catch {}
+      setUndoToastOpen("Undid last swipe");
+    }
+  };
+
   return (
     <div className="relative z-10 h-full w-full">
       <div className="flex flex-col h-full">
@@ -91,29 +102,17 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                   <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
                   </button>
+                  <button onClick={undoLast} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition" aria-label="Undo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 110 12h-3" />
+                    </svg>
+                  </button>
                   <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
                   </button>
                 </div>
               )}
-              {index < filtered.length && (
-                <div className="mt-1 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (index > 0) {
-                        setIndex(index - 1);
-                        const la = lastAction.current;
-                        if (la?.liked) removeMatch(la.horse.name);
-                        lastAction.current = null;
-                      }
-                    }}
-                    className="text-xs text-neutral-300 hover:text-white underline underline-offset-4"
-                  >
-                    Undo last swipe (Z)
-                  </button>
-                </div>
-              )}
+              {/* Removed text undo link; dedicated button provided above. */}
             </>
           ) : (
             <MatchesView matches={matches} onRemove={(name) => removeMatch(name)} />
@@ -145,8 +144,10 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 0 1 4.5 3h15a1.5 1.5 0 0 1 1.2 2.4l-6.3 8.4v4.35a1.5 1.5 0 0 1-.87 1.36l-3 1.5A1.5 1.5 0 0 1 8 19.5v-6.21L3.3 5.4A1.5 1.5 0 0 1 3 4.5z" clipRule="evenodd" /></svg>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Filters</span>
               </button>
-              <button type="button" aria-label="Undo last swipe" title="Undo" onClick={() => { if (index > 0) { setIndex(index - 1); const la = lastAction.current; if (la?.liked) removeMatch(la.horse.name); lastAction.current = null; try { localStorage.removeItem("tfh_last_action"); } catch {}; setUndoToastOpen("Undid last swipe"); } }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <span aria-hidden className="text-base">↩️</span>
+              <button type="button" aria-label="Undo last swipe" title="Undo" onClick={undoLast} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 110 12h-3" />
+                </svg>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Undo</span>
               </button>
               <button type="button" aria-label="Project info" title="Project info" onClick={() => { try { window.dispatchEvent(new CustomEvent("tfh:toggle-project-info")); } catch {} }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
