@@ -15,14 +15,7 @@ export default function MatchesView({ matches }: { matches: Horse[] }) {
 
   return (
     <div className="text-center space-y-4 text-white pb-[60px] md:pb-0">
-      <h2 className="text-xl md:text-2xl font-bold mt-1 md:mt-0">
-        <span className="md:hidden inline-flex items-center gap-2 rounded-full bg-neutral-900/80 px-3 py-1 border border-neutral-700">
-          <span aria-hidden>❤️</span>
-          Matches
-          <span className="ml-1 rounded-full bg-pink-600/20 text-pink-200 text-[11px] px-2 py-0.5">{matches.length}</span>
-        </span>
-        <span className="hidden md:inline">Matches</span>
-      </h2>
+      <h2 className="hidden md:block text-2xl font-bold mt-0">Matches</h2>
       {matches.length === 0 && <p>No matches yet. Better luck next time!</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 place-items-center">
         {matches.map((horse) => (

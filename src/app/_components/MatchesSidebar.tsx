@@ -14,7 +14,7 @@ export default function MatchesSidebar() {
       className={[
         "relative hidden md:block shrink-0 border-r border-neutral-800 bg-neutral-900/80 text-neutral-100 backdrop-blur",
         // Prevent any horizontal overflow/scrollbar flicker during width animation
-        "h-[calc(100svh-var(--nav-height,3rem)-var(--footer-height,3rem))] overflow-x-hidden overflow-y-hidden overscroll-x-none transition-[width] duration-200 ease-in-out",
+        "h-[calc(100dvh-var(--footer-height,3rem))] overflow-x-hidden overflow-y-hidden overscroll-x-none transition-[width] duration-200 ease-in-out",
         collapsed ? "md:w-12" : "md:w-64",
       ].join(" ")}
     >
@@ -119,7 +119,7 @@ export default function MatchesSidebar() {
         {!collapsed ? (
           <div className="shrink-0 border-t border-neutral-800 bg-neutral-900/80 px-3 py-3 overflow-x-hidden min-w-0">
             <a
-              href="/extra/ai-generated/codex/tinder-for-horses/new"
+              href="/new"
               className="w-full max-w-full min-w-0 inline-flex items-center justify-center rounded-lg bg-yellow-500 text-black text-sm font-medium px-3 py-2 hover:bg-yellow-400 overflow-hidden whitespace-nowrap truncate h-10"
             >
               <span>Create Profile</span>
@@ -128,7 +128,7 @@ export default function MatchesSidebar() {
         ) : (
           <div className="shrink-0 border-t border-neutral-800 bg-neutral-900/80 px-2 py-3 flex items-center justify-center">
             <a
-              href="/extra/ai-generated/codex/tinder-for-horses/new"
+              href="/new"
               aria-label="Create Profile"
               className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-yellow-500 text-black text-base font-bold hover:bg-yellow-400"
               title="Create Profile"

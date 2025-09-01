@@ -134,8 +134,11 @@ export function useDeckIndex(max: number) {
   useEffect(() => {
     try { localStorage.setItem(TFH_STORAGE.INDEX, String(index)); } catch {}
   }, [index]);
-  // Clamp
-  useEffect(() => { if (index > max) setIndex(max); }, [index, max]);
+  // Clamp: allow one-past-the-end (deck.length) so UI can show "No more"
+  useEffect(() => {
+    const allowedMax = Math.max(0, max + 1);
+    if (index > allowedMax) setIndex(allowedMax);
+  }, [index, max]);
   return [index, setIndex] as const;
 }
 

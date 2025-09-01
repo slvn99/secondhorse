@@ -138,11 +138,25 @@ export default function HorseSwiper({
           <p className="text-sm text-gray-300 mt-1">{horse.breed} • {horse.gender} • {horse.heightCm} cm • {horse.location}</p>
           <div className="mt-2 overflow-hidden relative cursor-pointer" role="button" aria-expanded={detailsOpen} onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }} onPointerDown={(e) => e.stopPropagation()} title={detailsOpen ? "Tap to collapse" : "Tap to expand"}>
             <p className={clsx("text-sm text-gray-200 transition-all duration-300", detailsOpen ? "line-clamp-none" : "line-clamp-1")}>{shortDesc}</p>
-            <div ref={detailsRef} className="text-xs text-gray-300 mt-2">
+            <div id="tfh-details" ref={detailsRef} className="text-xs text-gray-300 mt-2">
               <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 border border-pink-500/20 text-pink-200 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
               {previewDisciplines.length > 0 && (<div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 border border-blue-500/20 text-blue-200 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>)}
             </div>
           </div>
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            aria-controls="tfh-details"
+            onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="mt-2 select-none inline-flex items-center gap-1 text-[11px] text-gray-300/70 hover:text-gray-200/90 transition-colors"
+            title={detailsOpen ? "Tap to collapse" : "Tap to expand"}
+          >
+            <span className="sr-only sm:not-sr-only sm:inline">{detailsOpen ? "Tap to collapse" : "Tap to expand"}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={clsx("h-3.5 w-3.5 transition-transform duration-500", detailsOpen ? "rotate-180 opacity-70" : "rotate-0 opacity-60")}> 
+              <path fillRule="evenodd" d="M12 14.5a.75.75 0 0 1-.53-.22l-5-5a.75.75 0 1 1 1.06-1.06L12 12.69l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-.53.22z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       </div>
 

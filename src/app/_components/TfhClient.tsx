@@ -40,7 +40,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   return (
     <div className="relative z-10 h-full w-full">
       <div className="flex flex-col h-full">
-        <div className="flex-1 p-3 sm:p-6 flex flex-col items-stretch">
+        <div className="flex-1 p-3 sm:p-6 pb-20 md:pb-0 flex flex-col items-stretch">
           {tab === "browse" ? (
             <>
               <HorseSwiper onRate={onRate} horses={filtered} index={index} onIndexChange={setIndex} controlsRef={swiperControls} showActions={false} />
@@ -58,8 +58,8 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           )}
         </div>
         {/* Mobile bottom navbar */}
-        <div className="md:hidden shrink-0">
-          <div className="mx-auto w-full max-w-md px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+        <div className="md:hidden">
+          <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
             <div className="grid grid-cols-5 gap-2">
               <button type="button" onClick={() => setTab("browse")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "browse" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
                 <span aria-hidden className="text-base">🏇</span>

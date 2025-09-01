@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "bash scripts/clean.sh",
+    "reset": "bash -lc 'bash scripts/clean.sh && rm -rf node_modules package-lock.json && npm install'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -31,6 +36,7 @@
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.10",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^3.2.4"
   }
 }

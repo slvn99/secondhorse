@@ -1,38 +1,53 @@
-# Repository Guidelines
+Repository Guidelines
+=====================
 
-## Project Structure & Module Organization
-- `src/`: Application code (modules, components, CLI).
-- `tests/`: Unit/integration tests mirror `src/` layout.
-- `scripts/`: Developer utilities (setup, lint, release).
-- `assets/`: Static files (images, sample data).
-- `docs/`: Design notes and usage guides.
+Project Structure & Module Organization
+--------------------------------------
+- src/: Next.js app code (App Router).
+  - src/app: Routes, layouts, server actions (e.g., src/app/new/page.tsx).
+  - src/lib: Domain utilities and types (e.g., horses.ts).
+  - src/app/_components: Client components (e.g., TfhClient.tsx).
+- public/TFH: Static TFH assets (images, audio).
+- scripts/: Developer utilities (e.g., clean.sh).
+- v2/: Reference only; do not depend on it. Relevant bits have been ported.
 
-Keep modules small and cohesive. Co-locate tests next to code or under `tests/` with matching paths (e.g., `src/utils/date.ts` → `tests/utils/date.test.ts`).
+Build, Test, and Development Commands
+-------------------------------------
+- npm run dev: Start local dev server with HMR.
+- npm run build: Create production build.
+- npm start: Run the compiled server.
+- npm run lint: Run ESLint checks.
+- npm run type-check: TypeScript checks without emitting.
+- npm run clean: Remove .next/.turbo caches.
+- npm run reset: Clean caches, reinstall deps, rebuild.
 
-## Build, Test, and Development Commands
-- `make setup`: Install tools/dependencies if a Makefile exists.
-- `make build` / `npm run build`: Produce a production build or distributable.
-- `make test` / `npm test`: Run the test suite with coverage when configured.
-- `make lint` / `npm run lint`: Lint and static analysis.
-- `make dev` / `npm run dev`: Start local dev server/watch mode.
+Coding Style & Naming Conventions
+---------------------------------
+- TypeScript preferred; 2‑space indentation.
+- Components: PascalCase (e.g., TfhClient.tsx). App routes use Next patterns (page.tsx, layout.tsx).
+- Variables/functions: camelCase; types/interfaces: PascalCase.
+- Linting via ESLint (Next config). Run lint before PRs.
 
-If a Makefile is absent, prefer `package.json` scripts or `scripts/` helpers (PowerShell/bash).
+Testing Guidelines
+------------------
+- Framework: Vitest.
+- Layout: tests/ mirrors src/ or colocate.
+- Naming: `*.test.ts(x)` for unit, `*.spec.ts(x)` for integration.
+- Commands: `npm test` (CI), `npm run test:watch` (local), `npm run coverage` (report).
+- Example: see `tests/lib/horses.test.ts` (validates TFH seed data).
+- Aim for ≥80% coverage on changed code.
 
-## Coding Style & Naming Conventions
-- Indentation: 2 spaces for JS/TS; 4 spaces for Python.
-- Naming: PascalCase for classes/types; camelCase for functions/vars; kebab-case for file names (JS/TS) and snake_case for Python.
-- Formatting/Linting: Use Prettier + ESLint (JS/TS) or Black + Ruff/Flake8 (Python). Run via `make fmt` or `npm run format` when available.
-- Keep functions focused; prefer pure utilities and small modules.
+Commit & Pull Request Guidelines
+--------------------------------
+- Commits: Conventional Commits (e.g., feat(ui): add swipe actions).
+- PRs: Clear summary, link issues, list changes, screenshots for UI, note breaking changes and migration steps.
 
-## Testing Guidelines
-- Framework: Jest/Vitest (JS/TS) or Pytest (Python), depending on module language.
-- Layout: `tests/` mirrors `src/`; name tests as `*.test.(ts|js)` or `test_*.py`.
-- Coverage: Target ≥80% on changed code; run with `npm test -- --coverage` or `make coverage` when available.
+Security & Configuration Tips
+-----------------------------
+- Do not commit secrets. Use .env.local; add required vars to .env.example.
+- Key env vars: DATABASE_URL (Neon), optional BLOB_READ_WRITE_TOKEN, optional ALLOWED_HOSTS.
+- Images: next.config.ts includes TFH rewrites; public/TFH must contain referenced assets.
 
-## Commit & Pull Request Guidelines
-- Commits: Follow Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`). Keep messages imperative and scoped (e.g., `feat(api): add pagination to list endpoint`).
-- PRs: Provide a clear summary, link related issues, include screenshots for UI changes, list breaking changes and migration notes, and add test coverage for new behavior.
-
-## Security & Configuration Tips
-- Never commit secrets. Use `.env.local` for developer machines and `.env.example` to document required variables.
-- Review third-party licenses and pin dependencies where possible.
+Troubleshooting
+---------------
+- Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node ≥ 18.18 or 20.x.

@@ -17,7 +17,7 @@ export default function IntroOverlay() {
     setTimeout(() => setOpen(false), 400);
   };
 
-  const disabled = !!(pathname && pathname.includes("/extra/ai-generated/codex/tinder-for-horses/new"));
+  const disabled = !!(pathname && pathname.startsWith("/new"));
   if (disabled || !open) return null;
 
   return (

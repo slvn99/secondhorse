@@ -267,16 +267,21 @@ export default async function NewProfilePage() {
 
           <div className="rounded-2xl border border-neutral-700/40 bg-neutral-900/20 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Photos</h2>
-            <p className="text-xs text-neutral-400 mt-1">You can provide image URLs, upload files (if enabled), or both. Up to 5 photos.</p>
+            <p className="text-xs text-neutral-400 mt-1">Provide image URLs, upload files, or both. Up to 5 photos. The first photo becomes primary automatically.</p>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[0,1,2,3,4].map((i) => (
-                <div key={i} className="rounded-lg border border-neutral-800 p-3">
+                <div key={i} className="rounded-lg border border-neutral-800 p-3 bg-neutral-900/40">
                   <div className="text-sm text-neutral-300">Photo {i+1}</div>
-                  <input type="url" name={`photo_${i}`} placeholder="https://..." className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" />
-                  <input type="file" name={`photo_file_${i}`} accept="image/*" className="mt-2 w-full text-sm text-neutral-300 file:mr-3 file:rounded file:border-0 file:bg-neutral-800 file:text-neutral-200 file:px-3 file:py-1.5" />
-                  <div className="mt-2 flex items-center gap-2">
-                    <label className="text-xs text-neutral-400">Position<input type="number" name={`photo_${i}_pos`} min={1} max={99} className="ml-2 w-20 rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-2 py-1" /></label>
-                    <label className="text-xs text-neutral-400 inline-flex items-center gap-2"><input type="radio" name="primary_photo" value={i} /> Primary</label>
+                  <div id={`tfh-drop-${i}`} className="mt-2 aspect-[4/3] w-full overflow-hidden rounded-md border border-neutral-800 bg-neutral-950/60 flex items-center justify-center relative transition">
+                    {/* Preview image – updated by NewFormClient */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img id={`tfh-photo-prev-${i}`} alt={`Preview ${i+1}`} className="max-h-full max-w-full object-contain opacity-0 transition-opacity duration-200" />
+                    <div id={`tfh-drop-overlay-${i}`} className="pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-neutral-200 bg-black/30">Drop image to upload</div>
+                  </div>
+                  <input id={`tfh-photo-url-${i}`} type="url" name={`photo_${i}`} placeholder="https://..." className="mt-2 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" />
+                  <input id={`tfh-photo-file-${i}`} type="file" name={`photo_file_${i}`} accept="image/*" className="mt-2 w-full text-sm text-neutral-300 file:mr-3 file:rounded file:border-0 file:bg-neutral-800 file:text-neutral-200 file:px-3 file:py-1.5" />
+                  <div className="mt-2 flex items-center justify-end">
+                    <button type="button" id={`tfh-photo-remove-${i}`} className="text-xs text-neutral-300 hover:text-white underline underline-offset-2">Remove photo</button>
                   </div>
                 </div>
               ))}

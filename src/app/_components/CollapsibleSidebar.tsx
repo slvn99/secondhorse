@@ -52,7 +52,7 @@ export default function CollapsibleSidebar({
       <aside
         className={[
           "relative hidden md:block shrink-0 border-r border-neutral-800 bg-neutral-900/80 text-neutral-100 backdrop-blur",
-          "h-[calc(100svh-var(--nav-height,3rem)-var(--footer-height,3rem))] overflow-hidden",
+          "h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden",
           "transition-[width] duration-200 ease-in-out",
           collapsed ? "md:w-12" : "md:w-64",
           className,
@@ -135,7 +135,7 @@ export default function CollapsibleSidebar({
       {/* Backdrop */}
       {!collapsed && (
         <div
-          className="md:hidden fixed left-0 right-0 bottom-0 top-12 z-40 bg-black/50"
+          className="md:hidden fixed left-0 right-0 bottom-0 top-0 z-40 bg-black/50"
           onClick={() => setCollapsed(true)}
         />
       )}
@@ -143,7 +143,7 @@ export default function CollapsibleSidebar({
       {/* Drawer */}
       <aside
         className={[
-          "md:hidden fixed z-50 left-0 top-12 h-[calc(100svh-var(--nav-height,3rem)-var(--footer-height,3rem))] w-[85vw] max-w-sm",
+          "md:hidden fixed z-50 left-0 top-0 h-[calc(100dvh-var(--footer-height,3rem))] w-[85vw] max-w-sm",
           "border-r border-neutral-800 bg-neutral-900/95 text-neutral-100 backdrop-blur",
           "transition-transform duration-200 ease-in-out",
           collapsed ? "-translate-x-full" : "translate-x-0",

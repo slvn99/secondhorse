@@ -6,18 +6,25 @@ import TfhClient from "./_components/TfhClient";
 
 export const metadata: Metadata = {
   title: "Second Horse Dating",
-  description: "Swipe through horse profiles and find your perfect pasture partner.",
+  description: "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
   openGraph: {
     title: "Second Horse Dating",
-    description: "Swipe through horse profiles and find your perfect pasture partner.",
+    description: "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
     url: "/",
     siteName: "Second Horse Dating",
     images: [ { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – swipe horse profiles" } ],
     type: "website",
   },
-  twitter: { card: "summary_large_image", title: "Second Horse Dating", description: "Swipe through horse profiles and find your perfect pasture partner.", images: ["/TFH/tfh-og-image.png"] },
+  twitter: { card: "summary_large_image", title: "Second Horse Dating", description: "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.", images: ["/TFH/tfh-og-image.png"] },
   alternates: { canonical: "/" },
-  keywords: ["second horse dating", "horse profiles", "equestrian", "swipe horses"],
+  keywords: [
+    "second horse dating",
+    "tinder for horses",
+    "tinder-for-horses",
+    "horse profiles",
+    "equestrian",
+    "swipe horses",
+  ],
 };
 
 export const dynamic = "force-dynamic";
@@ -74,7 +81,7 @@ export default async function SecondHorsePage() {
   const dbHorses = await loadHorsesFromDb();
   const horses = dbHorses.length ? dbHorses : localHorses;
   return (
-    <div className="relative w-full overflow-hidden h-[calc(100svh-var(--nav-height,3rem)-var(--footer-height,3rem))]">
+    <div className="relative w-full overflow-y-auto h-full">
       <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority />
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative z-10 h-full w-full text-white">
