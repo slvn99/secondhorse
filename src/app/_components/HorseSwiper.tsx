@@ -5,7 +5,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import { horses as allHorses } from "@/lib/horses";
 import type { Horse } from "@/lib/horses";
-import { TFH_EVENTS } from "@/lib/tfh";
+import { TFH_EVENTS, TFH_STORAGE } from "@/lib/tfh";
 
 export default function HorseSwiper({
   onRate,
@@ -51,10 +51,8 @@ export default function HorseSwiper({
   const [showPhoto, setShowPhoto] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
-  const detailsRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { const el = detailsRef.current; if (!el) return; el.style.overflow = "hidden"; el.style.willChange = "height, opacity"; el.style.transition = "height 300ms ease, opacity 300ms ease"; if (detailsOpen) { el.style.opacity = "1"; if (el.style.height === "auto") el.style.height = "0px"; el.offsetHeight; el.style.height = `${el.scrollHeight}px`; } else { if (el.style.height === "auto") { el.style.height = `${el.scrollHeight}px`; el.offsetHeight; } el.style.opacity = "0"; el.style.height = "0px"; } }, [detailsOpen]);
-  useEffect(() => { const el = detailsRef.current; if (!el) return; const onEnd = (e: TransitionEvent) => { if (e.propertyName !== "height") return; if (detailsOpen) el.style.height = "auto"; }; el.addEventListener("transitionend", onEnd as any); return () => el.removeEventListener("transitionend", onEnd as any); }, [detailsOpen]);
+  // details panel now uses a scrollable container with a max-height for readability on mobile
 
   const controlled = useMemo(() => typeof index === "number" && !!onIndexChange, [index, onIndexChange]);
   const currentIndex = controlled ? (index as number) : internalIndex;
@@ -76,7 +74,21 @@ export default function HorseSwiper({
         <p className="text-sm text-gray-300">Looks like you’ve reached the end. Try widening your filters, reshuffling the deck, or add a new profile.</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button type="button" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800">Open Filters</button>
-          <button type="button" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.RESET)); } catch {} }} className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800">Reset Deck</button>
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                localStorage.setItem(TFH_STORAGE.INDEX, "0");
+                localStorage.removeItem(TFH_STORAGE.SEED);
+                localStorage.removeItem(TFH_STORAGE.MATCHES);
+                window.dispatchEvent(new CustomEvent(TFH_EVENTS.MATCHES));
+                window.dispatchEvent(new CustomEvent(TFH_EVENTS.RESET));
+              } catch {}
+            }}
+            className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800"
+          >
+            Reset app
+          </button>
           <a href="/new" className="rounded-lg bg-yellow-500 text-black px-3 py-1.5 text-sm font-medium hover:bg-yellow-400">Add Profile</a>
         </div>
       </div>
@@ -132,16 +144,28 @@ export default function HorseSwiper({
         <button type="button" aria-label="Enlarge photo" title="Enlarge photo" className="absolute top-2 right-2 z-10 rounded-full bg-black/50 text-white p-2 border border-white/20 hover:bg-black/70" onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }} onPointerDown={(e) => e.stopPropagation()}>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M3.75 3A.75.75 0 0 0 3 3.75v4.5a.75.75 0 0 0 1.5 0V5.56l4.72 4.72a.75.75 0 1 0 1.06-1.06L5.56 4.5h2.69a.75.75 0 0 0 0-1.5h-4.5ZM20.25 21a.75.75 0 0 0 .75-.75v-4.5a.75.75 0 0 0-1.5 0v2.69l-4.72-4.72a.75.75 0 1 0-1.06 1.06l4.72 4.72h-2.69a.75.75 0 0 0 0 1.5h4.5Z"/><path d="M3.75 21h4.5a.75.75 0 0 0 0-1.5H5.56l4.72-4.72a.75.75 0 0 0-1.06-1.06L4.5 18.44v-2.69a.75.75 0 0 0-1.5 0v4.5c0 .414.336.75.75.75ZM20.25 3h-4.5a.75.75 0 0 0 0 1.5h2.69l-4.72 4.72a.75.75 0 0 0 1.06 1.06L19.5 5.56v2.69a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 0 20.25 3Z"/></svg>
         </button>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className={clsx(
+          "absolute inset-0 bg-gradient-to-t",
+          // Darker gradient when expanded for readability; lighter when collapsed
+          detailsOpen ? "from-black/55 via-black/30 to-transparent" : "from-black/28 via-black/12 to-transparent"
+        )} />
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
           <h3 className="text-2xl font-semibold">{horse.name}, {horse.age}</h3>
           <p className="text-sm text-gray-300 mt-1">{horse.breed} • {horse.gender} • {horse.heightCm} cm • {horse.location}</p>
-          <div className="mt-2 overflow-hidden relative cursor-pointer" role="button" aria-expanded={detailsOpen} onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }} onPointerDown={(e) => e.stopPropagation()} title={detailsOpen ? "Tap to collapse" : "Tap to expand"}>
-            <p className={clsx("text-sm text-gray-200 transition-all duration-300", detailsOpen ? "line-clamp-none" : "line-clamp-1")}>{shortDesc}</p>
-            <div id="tfh-details" ref={detailsRef} className="text-xs text-gray-300 mt-2">
-              <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 border border-pink-500/20 text-pink-200 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
-              {previewDisciplines.length > 0 && (<div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 border border-blue-500/20 text-blue-200 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>)}
-            </div>
+          <div className="mt-2 relative cursor-pointer" role="button" aria-expanded={detailsOpen} onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }} onPointerDown={(e) => e.stopPropagation()} title={detailsOpen ? "Tap to collapse" : "Tap to expand"}>
+            {!detailsOpen ? (
+              <p className="text-sm text-white line-clamp-1">{shortDesc}</p>
+            ) : (
+              <div id="tfh-details" className="max-h-[40vh] overflow-y-auto pr-1">
+                <p className="text-sm leading-5 text-white">{shortDesc}</p>
+                <div className="text-xs text-white/90 mt-2">
+                  <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 text-pink-100 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
+                  {previewDisciplines.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 text-blue-100 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -149,10 +173,10 @@ export default function HorseSwiper({
             aria-controls="tfh-details"
             onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }}
             onPointerDown={(e) => e.stopPropagation()}
-            className="mt-2 select-none inline-flex items-center gap-1 text-[11px] text-gray-300/70 hover:text-gray-200/90 transition-colors"
+            className="mt-2 select-none inline-flex items-center gap-1 text-[12px] text-white/85 hover:text-white transition-colors"
             title={detailsOpen ? "Tap to collapse" : "Tap to expand"}
           >
-            <span className="sr-only sm:not-sr-only sm:inline">{detailsOpen ? "Tap to collapse" : "Tap to expand"}</span>
+            <span>{detailsOpen ? "Tap to collapse" : "Tap to expand"}</span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={clsx("h-3.5 w-3.5 transition-transform duration-500", detailsOpen ? "rotate-180 opacity-70" : "rotate-0 opacity-60")}> 
               <path fillRule="evenodd" d="M12 14.5a.75.75 0 0 1-.53-.22l-5-5a.75.75 0 1 1 1.06-1.06L12 12.69l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-.53.22z" clipRule="evenodd" />
             </svg>

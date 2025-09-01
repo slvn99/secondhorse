@@ -5,12 +5,18 @@ import CollapsibleSidebar from "./_components/CollapsibleSidebar";
 import MatchesSidebar from "./_components/MatchesSidebar";
 import IntroOverlay from "./_components/IntroOverlay";
 import Footer from "./_components/Footer";
+import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import styles from "./tinder-layout.module.css";
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const created = "2025-02-25"; // visible creation date label
-  const version = "v0.1";
-  const lastUpdated = created;
+  // Version/updated based on last commit; fall back to env or created
+  const shortFromGit = getShortCommit();
+  const dateFromGit = getLastCommitDate();
+  const envSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.COMMIT_SHA || "";
+  const shortFromEnv = envSha ? String(envSha).slice(0, 7) : null;
+  const version = shortFromGit ? `git-${shortFromGit}` : shortFromEnv ? `git-${shortFromEnv}` : "v0.1";
+  const lastUpdated = dateFromGit || created;
 
   return (
     <html lang="en">

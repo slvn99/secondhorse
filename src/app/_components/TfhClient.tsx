@@ -44,14 +44,16 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           {tab === "browse" ? (
             <>
               <HorseSwiper onRate={onRate} horses={filtered} index={index} onIndexChange={setIndex} controlsRef={swiperControls} showActions={false} />
-              <div className="mt-3 flex items-center justify-center gap-10 h-14 sm:h-16">
-                <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
-                </button>
-                <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
-                </button>
-              </div>
+              {index < filtered.length && (
+                <div className="mt-3 flex items-center justify-center gap-10 h-14 sm:h-16">
+                  <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
+                  </button>
+                  <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <MatchesView matches={matches} />
