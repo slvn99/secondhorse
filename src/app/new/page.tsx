@@ -7,7 +7,25 @@ import Script from "next/script";
 import { saveImageAndGetUrl } from "../_lib/uploads";
 import NewFormClient from "./NewFormClient";
 
-export const metadata: Metadata = { title: "Add Horse Profile – Second Horse Dating", description: "Create a new horse profile with photos." };
+export const metadata: Metadata = {
+  title: "Add Horse Profile",
+  description: "Create a new horse profile with photos.",
+  openGraph: {
+    title: "Add Horse Profile – Second Horse Dating",
+    description: "Create a new horse profile with photos.",
+    images: [
+      { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – add horse profile" },
+    ],
+    url: "/new",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Add Horse Profile – Second Horse Dating",
+    description: "Create a new horse profile with photos.",
+    images: ["/TFH/tfh-og-image.png"],
+  },
+  alternates: { canonical: "/new" },
+};
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

@@ -5,6 +5,20 @@ export const metadata: Metadata = {
   title: "Privacy – Second Horse Dating",
   description: "How we use cookies, analytics, and handle profile data.",
   alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy – Second Horse Dating",
+    description: "How we use cookies, analytics, and handle profile data.",
+    images: [
+      { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – privacy" },
+    ],
+    url: "/privacy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy – Second Horse Dating",
+    description: "How we use cookies, analytics, and handle profile data.",
+    images: ["/TFH/tfh-og-image.png"],
+  },
 };
 
 export default function PrivacyPage() {

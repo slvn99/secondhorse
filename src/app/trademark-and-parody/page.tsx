@@ -5,6 +5,20 @@ export const metadata: Metadata = {
   title: "Trademark & Parody Note – Second Horse Dating",
   description: "Disclaimer about trademarks, affiliations, and parody/satire intent.",
   alternates: { canonical: "/trademark-and-parody" },
+  openGraph: {
+    title: "Trademark & Parody – Second Horse Dating",
+    description: "Disclaimer about trademarks, affiliations, and parody/satire intent.",
+    images: [
+      { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – trademark & parody" },
+    ],
+    url: "/trademark-and-parody",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trademark & Parody – Second Horse Dating",
+    description: "Disclaimer about trademarks, affiliations, and parody/satire intent.",
+    images: ["/TFH/tfh-og-image.png"],
+  },
 };
 
 export default function TrademarkParodyPage() {

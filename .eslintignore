@@ -1,0 +1,6 @@
+node_modules/
+.next/
+v2/
+**/*.tsbuildinfo
+dist/
+out/

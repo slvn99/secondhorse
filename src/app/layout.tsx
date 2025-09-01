@@ -101,6 +101,38 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: {
+    default: "Second Horse Dating",
+    template: "%s – Second Horse Dating",
+  },
+  description:
+    "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+  keywords: [
+    "second horse dating",
+    "tinder for horses",
+    "tinder-for-horses",
+    "horse profiles",
+    "equestrian",
+    "swipe horses",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "Second Horse Dating",
+    title: "Second Horse Dating",
+    description:
+      "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+    images: [
+      { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – swipe horse profiles" },
+    ],
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Second Horse Dating",
+    description:
+      "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+    images: ["/TFH/tfh-og-image.png"],
+  },
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
