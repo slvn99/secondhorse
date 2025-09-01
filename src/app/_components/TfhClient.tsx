@@ -10,6 +10,15 @@ import Toast from "./Toast";
 
 export default function TfhClient({ horses }: { horses: Horse[] }) {
   const baseList = useMemo(() => horses ?? [], [horses]);
+  // Ensure every horse has an id (prefer DB id, else derive a stable hash from name)
+  const withIds = useMemo(() => {
+    const hash = (s: string) => {
+      let h = 2166136261;
+      for (let i = 0; i < s.length; i++) h = (h ^ s.charCodeAt(i)) * 16777619;
+      return (h >>> 0).toString(16);
+    };
+    return baseList.map((h) => (h.id ? h : ({ ...h, id: `l_${hash(h.name)}` } as any)));
+  }, [baseList]);
   const { matches, addMatch, removeMatch } = useTfhMatches(baseList);
   const lastAction = useRef<{ horse: Horse; liked: boolean } | null>(null);
   const [undoToastOpen, setUndoToastOpen] = useState<string | null>(null);
@@ -19,16 +28,19 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     if (liked) addMatch(h);
   };
   const [tab, setTab] = useState<"browse" | "matches">("browse");
+  const urlHasTarget = useMemo(() => {
+    try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
+  }, []);
 
   const { gender, minAge, maxAge } = useTfhFilters();
   const filtered = useMemo(() => {
-    return baseList.filter((h) => {
+    return withIds.filter((h) => {
       if (gender !== "All" && h.gender !== gender) return false;
       if (minAge !== "" && h.age < minAge) return false;
       if (maxAge !== "" && h.age > maxAge) return false;
       return true;
     });
-  }, [baseList, gender, minAge, maxAge]);
+  }, [withIds, gender, minAge, maxAge]);
   const [index, setIndex] = useDeckIndex(Math.max(0, filtered.length - 1));
 
   useEffect(() => {
@@ -67,22 +79,37 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
 
   // Deep-linking: read ?p= or ?profile= on first mount against current filtered list
   const didInitFromQuery = useRef(false);
+  // If URL includes a target id/name, clear stored deck index to let query take precedence
   useEffect(() => {
-    if (didInitFromQuery.current) return;
     try {
       const sp = new URLSearchParams(window.location.search);
-      const q = sp.get("p") || sp.get("profile");
-      if (q) {
-        const targetName = decodeURIComponent(q);
-        const idx = filtered.findIndex((h) => h.name === targetName);
+      if (sp.get("id") || sp.get("p") || sp.get("profile")) {
+        localStorage.removeItem("tfh_index");
+      }
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (didInitFromQuery.current) return;
+    let hasQuery = false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const qid = sp.get("id");
+      const qname = sp.get("p") || sp.get("profile");
+      hasQuery = !!(qid || qname);
+      if (qid || qname) {
+        const targetId = qid || (qname ? `l_${(function (s:string){let h=2166136261;for(let i=0;i<s.length;i++)h=(h^s.charCodeAt(i))*16777619;return (h>>>0).toString(16);})(decodeURIComponent(qname))}` : undefined);
+        const idx = filtered.findIndex((h) => (h as any).id === targetId);
         if (idx >= 0) {
-          setIndex(idx);
+          // Defer to win over any localStorage index restoration
+          setTimeout(() => setIndex(idx), 0);
+          try { localStorage.setItem("tfh_index", String(idx)); } catch {}
           didInitFromQuery.current = true;
           return;
         }
       }
     } catch {}
-    didInitFromQuery.current = true;
+    // Only mark as initialized if no query is present
+    if (!hasQuery) didInitFromQuery.current = true;
   }, [filtered, setIndex]);
 
   // Update URL when index changes (no reload)
@@ -90,9 +117,11 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     try {
       const u = new URL(window.location.href);
       if (index >= 0 && index < filtered.length) {
-        u.searchParams.set("p", encodeURIComponent(filtered[index].name));
-      } else {
+        u.searchParams.set("id", String((filtered[index] as any).id));
         u.searchParams.delete("p");
+        u.searchParams.delete("profile");
+      } else {
+        u.searchParams.delete("id");
       }
       window.history.replaceState({}, "", u.toString());
     } catch {}
@@ -101,9 +130,10 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   // Jump to profile on TFH_EVENTS.OPEN_PROFILE without navigation
   useEffect(() => {
     const onOpen = (e: Event) => {
-      const name = (e as CustomEvent<{ name?: string }>).detail?.name;
-      if (!name) return;
-      const idx = filtered.findIndex((h) => h.name === name);
+      const detail = (e as CustomEvent<{ id?: string; name?: string }>).detail;
+      const targetId = detail?.id || (detail?.name ? `l_${(function (s:string){let h=2166136261;for(let i=0;i<s.length;i++)h=(h^s.charCodeAt(i))*16777619;return (h>>>0).toString(16);})(detail.name)}` : undefined);
+      if (!targetId) return;
+      const idx = filtered.findIndex((h) => (h as any).id === targetId);
       if (idx >= 0) setIndex(idx);
     };
     window.addEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
@@ -141,7 +171,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         <div className="flex-1 p-3 sm:p-6 pb-20 md:pb-0 flex flex-col items-stretch">
           {tab === "browse" ? (
             <>
-              <HorseSwiper onRate={onRate} horses={filtered} index={index} onIndexChange={setIndex} controlsRef={swiperControls} showActions={false} />
+              <HorseSwiper onRate={onRate} horses={filtered} index={index} onIndexChange={setIndex} controlsRef={swiperControls} showActions={false} disableShuffle={urlHasTarget} />
               {index < filtered.length && (
                 <div className="mt-3 flex items-center justify-center gap-10 h-14 sm:h-16">
                   <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike">

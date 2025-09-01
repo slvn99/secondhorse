@@ -14,6 +14,7 @@ export default function HorseSwiper({
   onIndexChange,
   showActions = true,
   controlsRef,
+  disableShuffle = false,
 }: {
   onRate?: (horse: Horse, liked: boolean) => void;
   horses?: Horse[];
@@ -24,6 +25,7 @@ export default function HorseSwiper({
     | { like: () => void; dislike: () => void; canAct: () => boolean }
     | null
   >;
+  disableShuffle?: boolean;
 }) {
   const [internalIndex, setInternalIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
@@ -41,7 +43,12 @@ export default function HorseSwiper({
 
   useEffect(() => { try { let s = localStorage.getItem("tfh_seed"); if (!s) { s = Math.random().toString(36).slice(2); localStorage.setItem("tfh_seed", s); } setSeed(s); } catch { setSeed("default"); } }, []);
   useEffect(() => { const onReset = () => { let s = Math.random().toString(36).slice(2); try { localStorage.setItem("tfh_seed", s); } catch {} setSeed(s); }; window.addEventListener("tfh:reset", onReset as EventListener); return () => window.removeEventListener("tfh:reset", onReset as EventListener); }, []);
-  useEffect(() => { if (!seed) { setDeck(baseList); return; } const arr = [...baseList].sort((a, b) => scoreFor(a.name, seed) - scoreFor(b.name, seed)); setDeck(arr); }, [baseList, seed, scoreFor]);
+  useEffect(() => {
+    if (disableShuffle) { setDeck(baseList); return; }
+    if (!seed) { setDeck(baseList); return; }
+    const arr = [...baseList].sort((a, b) => scoreFor(a.name, seed) - scoreFor(b.name, seed));
+    setDeck(arr);
+  }, [baseList, seed, scoreFor, disableShuffle]);
 
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);

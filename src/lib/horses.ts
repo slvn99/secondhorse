@@ -1,4 +1,5 @@
 export type Horse = {
+  id?: string; // optional unique identifier (DB UUID preferred)
   name: string;
   age: number;
   breed: string;

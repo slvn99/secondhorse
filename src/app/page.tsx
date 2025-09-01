@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-async function loadHorsesFromDb(): Promise<Horse[]> {
+  async function loadHorsesFromDb(): Promise<Horse[]> {
   try {
     const url = process.env.DATABASE_URL;
     if (!url) return [];
@@ -37,7 +37,7 @@ async function loadHorsesFromDb(): Promise<Horse[]> {
     const sql = neon(url);
 
     type DbPhoto = { url?: string | null; is_primary?: boolean | null; position?: number | null };
-    type DbRow = { display_name?: string | null; bio?: string | null; age_years?: number | null; breed?: string | null; gender?: string | null; height_cm?: number | null; location_city?: string | null; location_country?: string | null; color?: string | null; temperament?: string | null; disciplines?: unknown; interests?: unknown; photos?: unknown; };
+    type DbRow = { id?: string; display_name?: string | null; bio?: string | null; age_years?: number | null; breed?: string | null; gender?: string | null; height_cm?: number | null; location_city?: string | null; location_country?: string | null; color?: string | null; temperament?: string | null; disciplines?: unknown; interests?: unknown; photos?: unknown; };
 
     const toTitle = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : undefined);
     const mapGender = (g?: string | null): Horse["gender"] => { const t = toTitle(g); return t === "Mare" || t === "Stallion" || t === "Gelding" ? (t as Horse["gender"]) : "Gelding"; };
@@ -48,7 +48,7 @@ async function loadHorsesFromDb(): Promise<Horse[]> {
       const ordered = photos.slice().sort((a, b) => (Number(b?.is_primary) - Number(a?.is_primary)) || (Number(a?.position ?? 0) - Number(b?.position ?? 0)));
       const urls = ordered.map((p) => (p && p.url ? String(p.url) : null)).filter((u): u is string => !!u);
       const image = urls[0] || "/TFH/Tinder-for-Horses-cover-image.png";
-      return { name: r.display_name || "Unknown", age: r.age_years ?? 5, breed: r.breed ?? "Unknown", location: loc || "Unknown", gender: mapGender(r.gender), heightCm, description: r.bio ?? "", color: r.color ?? "Bay", temperament: r.temperament ?? "Calm", disciplines: Array.isArray(r.disciplines) ? (r.disciplines as string[]) : [], interests: Array.isArray(r.interests) ? (r.interests as string[]) : [], image, photos: urls.length > 0 ? urls : undefined } satisfies Horse;
+      return { id: r.id, name: r.display_name || "Unknown", age: r.age_years ?? 5, breed: r.breed ?? "Unknown", location: loc || "Unknown", gender: mapGender(r.gender), heightCm, description: r.bio ?? "", color: r.color ?? "Bay", temperament: r.temperament ?? "Calm", disciplines: Array.isArray(r.disciplines) ? (r.disciplines as string[]) : [], interests: Array.isArray(r.interests) ? (r.interests as string[]) : [], image, photos: urls.length > 0 ? urls : undefined } satisfies Horse;
     };
 
     try {
