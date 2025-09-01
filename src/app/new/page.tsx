@@ -303,8 +303,8 @@ export default async function NewProfilePage() {
                   <div className="mt-2 flex items-center justify-end">
                     <button type="button" id={`tfh-photo-remove-${i}`} className="text-xs text-neutral-300 hover:text-white underline underline-offset-2">Remove photo</button>
                   </div>
+                  <div id={`tfh-photo-err-${i}`} className="hidden mt-1 text-xs text-red-300"></div>
                 </div>
-                <div id={`tfh-photo-err-${i}`} className="hidden mt-1 text-xs text-red-300"></div>
               ))}
             </div>
           </div>
