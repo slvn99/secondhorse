@@ -65,6 +65,51 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [index, setIndex, tab, removeMatch]);
 
+  // Deep-linking: read ?p= or ?profile= on first mount against current filtered list
+  const didInitFromQuery = useRef(false);
+  useEffect(() => {
+    if (didInitFromQuery.current) return;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const q = sp.get("p") || sp.get("profile");
+      if (q) {
+        const targetName = decodeURIComponent(q);
+        const idx = filtered.findIndex((h) => h.name === targetName);
+        if (idx >= 0) {
+          setIndex(idx);
+          didInitFromQuery.current = true;
+          return;
+        }
+      }
+    } catch {}
+    didInitFromQuery.current = true;
+  }, [filtered, setIndex]);
+
+  // Update URL when index changes (no reload)
+  useEffect(() => {
+    try {
+      const u = new URL(window.location.href);
+      if (index >= 0 && index < filtered.length) {
+        u.searchParams.set("p", encodeURIComponent(filtered[index].name));
+      } else {
+        u.searchParams.delete("p");
+      }
+      window.history.replaceState({}, "", u.toString());
+    } catch {}
+  }, [index, filtered]);
+
+  // Jump to profile on TFH_EVENTS.OPEN_PROFILE without navigation
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const name = (e as CustomEvent<{ name?: string }>).detail?.name;
+      if (!name) return;
+      const idx = filtered.findIndex((h) => h.name === name);
+      if (idx >= 0) setIndex(idx);
+    };
+    window.addEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
+    return () => window.removeEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
+  }, [filtered, setIndex]);
+
   // Restore last action on mount (for persisted undo)
   useEffect(() => {
     try {
@@ -110,6 +155,12 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                   <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
                   </button>
+                  <button onClick={() => { try { const u = new URL(window.location.href); const link = u.toString(); navigator.clipboard.writeText(link); setUndoToastOpen("Profile link copied"); } catch {} }} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition" aria-label="Share profile">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-6 w-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                    </svg>
+                  </button>
                 </div>
               )}
               {/* Removed text undo link; dedicated button provided above. */}
@@ -121,7 +172,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         {/* Mobile bottom navbar */}
         <div className="md:hidden">
           <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               <button type="button" onClick={() => setTab("browse")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "browse" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
                 <span aria-hidden className="text-base">🏇</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Discover</span>
@@ -143,12 +194,6 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
               <button type="button" aria-label="Open filters" title="Filters" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 0 1 4.5 3h15a1.5 1.5 0 0 1 1.2 2.4l-6.3 8.4v4.35a1.5 1.5 0 0 1-.87 1.36l-3 1.5A1.5 1.5 0 0 1 8 19.5v-6.21L3.3 5.4A1.5 1.5 0 0 1 3 4.5z" clipRule="evenodd" /></svg>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Filters</span>
-              </button>
-              <button type="button" aria-label="Undo last swipe" title="Undo" onClick={undoLast} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 110 12h-3" />
-                </svg>
-                <span className="hidden sm:inline whitespace-nowrap truncate">Undo</span>
               </button>
               <button type="button" aria-label="Project info" title="Project info" onClick={() => { try { window.dispatchEvent(new CustomEvent("tfh:toggle-project-info")); } catch {} }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <span aria-hidden className="text-base">ℹ️</span>

@@ -244,6 +244,13 @@ export default async function NewProfilePage() {
         <form id="tfh-new-form" action={create} className="space-y-6 mt-6">
           {notice && notice.type === "error" && (<div className="rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm">{notice.message}</div>)}
           <div id="tfh-form-error" className="hidden rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm"></div>
+          <div id="tfh-draft-banner" className="hidden rounded border border-blue-800 bg-blue-900/40 text-blue-100 px-3 py-2 text-sm flex items-center justify-between gap-2">
+            <span>A saved draft is available.</span>
+            <span className="flex items-center gap-2">
+              <button type="button" id="tfh-draft-restore" className="rounded border border-blue-700 bg-blue-800 px-2 py-1 text-xs hover:bg-blue-700">Restore</button>
+              <button type="button" id="tfh-draft-discard" className="rounded border border-blue-700 bg-blue-800 px-2 py-1 text-xs hover:bg-blue-700">Discard</button>
+            </span>
+          </div>
           <p className="text-sm text-neutral-400">Fields marked with <span className="text-yellow-400">*</span> are required. Others are optional.</p>
           <div className="mt-2 rounded-md border border-yellow-700/40 bg-yellow-900/20 text-yellow-100 px-3 py-2 text-xs">
             All profiles are reviewed by a human before publishing. Submissions may take up to 24 hours.
@@ -297,6 +304,7 @@ export default async function NewProfilePage() {
                     <button type="button" id={`tfh-photo-remove-${i}`} className="text-xs text-neutral-300 hover:text-white underline underline-offset-2">Remove photo</button>
                   </div>
                 </div>
+                <div id={`tfh-photo-err-${i}`} className="hidden mt-1 text-xs text-red-300"></div>
               ))}
             </div>
           </div>
