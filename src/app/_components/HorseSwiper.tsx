@@ -64,11 +64,13 @@ export default function HorseSwiper({
   const [showPhoto, setShowPhoto] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   // details panel now uses a scrollable container with a max-height for readability on mobile
 
   const controlled = useMemo(() => typeof index === "number" && !!onIndexChange, [index, onIndexChange]);
   const currentIndex = controlled ? (index as number) : internalIndex;
+  useEffect(() => { setImgLoaded(false); }, [currentIndex, photoIdx]);
   const incrementIndex = useCallback(() => {
     if (controlled) {
       onIndexChange?.(currentIndex + 1);
@@ -79,7 +81,11 @@ export default function HorseSwiper({
   useEffect(() => { if (!controlled) setInternalIndex(0); }, [deck, controlled]);
   useEffect(() => { setPhotoIdx(0); }, [currentIndex]);
 
-  const handleChoice = useCallback((liked: boolean) => { setDirection(liked ? "right" : "left"); setTimeout(() => { onRate?.(deck[currentIndex], liked); incrementIndex(); setDirection(null); }, 300); }, [onRate, deck, currentIndex, incrementIndex]);
+  const handleChoice = useCallback((liked: boolean) => {
+    try { if (typeof navigator !== "undefined" && (navigator as any).vibrate) (navigator as any).vibrate(liked ? 12 : 8); } catch {}
+    setDirection(liked ? "right" : "left");
+    setTimeout(() => { onRate?.(deck[currentIndex], liked); incrementIndex(); setDirection(null); }, 300);
+  }, [onRate, deck, currentIndex, incrementIndex]);
   useEffect(() => { if (!controlsRef) return; controlsRef.current = { like: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(true); }, dislike: () => { if (direction !== null || currentIndex >= deck.length) return; handleChoice(false); }, canAct: () => direction === null && currentIndex < deck.length }; }, [controlsRef, direction, currentIndex, deck.length, handleChoice]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => { if (direction !== null) return; startX.current = e.clientX; startY.current = e.clientY; setDragging(true); try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch {} };
@@ -157,12 +163,34 @@ export default function HorseSwiper({
         onPointerCancel={onPointerUp}
         style={direction ? undefined : { transform: `translate(${dx}px, ${dy * 0.2}px) rotate(${Math.max(-15, Math.min(15, dx / 12))}deg)`, cursor: dragging ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
       >
+        {/* Swipe badges for clarity */}
+        <div className="pointer-events-none absolute inset-0 z-30 select-none">
+          <div
+            className={clsx(
+              "absolute top-3 left-3 rounded-md border-2 border-red-500/80 px-2 py-1 text-red-300 text-sm font-bold tracking-wider transition-opacity",
+              dx < -15 ? "opacity-100" : "opacity-0"
+            )}
+            style={{ opacity: Math.max(0, Math.min(1, (-dx - 15) / 80)) }}
+          >
+            NOPE
+          </div>
+          <div
+            className={clsx(
+              "absolute top-3 right-3 rounded-md border-2 border-green-500/80 px-2 py-1 text-green-200 text-sm font-bold tracking-wider transition-opacity",
+              dx > 15 ? "opacity-100" : "opacity-0"
+            )}
+            style={{ opacity: Math.max(0, Math.min(1, (dx - 15) / 80)) }}
+          >
+            LIKE
+          </div>
+        </div>
         {/^https?:\/\//.test(gallery[safeIdx]) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={gallery[safeIdx]} alt={`Photo of ${horse.name}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = defaultImg; } } catch {} }} />
+          <img src={gallery[safeIdx]} alt={`Photo of ${horse.name}`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" onLoad={() => setImgLoaded(true)} onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = defaultImg; } } catch {} }} />
         ) : (
-          <Image src={gallery[safeIdx] || defaultImg} alt={`Photo of ${horse.name}`} fill sizes="(max-width: 640px) 90vw, (max-width: 768px) 28rem, (max-width: 1024px) 32rem, 36rem" className="object-cover" />
+          <Image src={gallery[safeIdx] || defaultImg} alt={`Photo of ${horse.name}`} fill sizes="(max-width: 640px) 90vw, (max-width: 768px) 28rem, (max-width: 1024px) 32rem, 36rem" className="object-cover" onLoadingComplete={() => setImgLoaded(true)} />
         )}
+        {!imgLoaded && (<div className="absolute inset-0 bg-neutral-800 animate-pulse" aria-hidden="true" />)}
         {gallery.length > 1 && (
           <>
             <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
@@ -257,13 +285,21 @@ export default function HorseSwiper({
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
           <div className="absolute inset-0 bg-black/70" onClick={() => setShowPhoto(false)} aria-hidden="true" />
           <div className="relative z-10 w-[92vw] max-w-3xl">
-            <div className="bg-neutral-900/95 backdrop-blur p-2 sm:p-3 rounded-2xl border border-gray-700 shadow-2xl text-left">
-        {/^https?:\/\//.test(gallery[photoIdx]) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} className="rounded-lg w-full h-auto" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
-        ) : (
-          <Image src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} width={1200} height={800} className="rounded-lg w-full h-auto" placeholder="blur" blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
-        )}
+            <div className="bg-neutral-900/95 backdrop-blur p-2 sm:p-3 rounded-2xl border border-gray-700 shadow-2xl text-left select-none">
+              <div
+                className="relative"
+                onPointerDown={(e) => { try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch {} (e.currentTarget as any)._sx = e.clientX; (e.currentTarget as any)._sy = e.clientY; (e.currentTarget as any)._dx = 0; (e.currentTarget as any)._dy = 0; }}
+                onPointerMove={(e) => { const sx = (e.currentTarget as any)._sx; const sy = (e.currentTarget as any)._sy; if (sx == null || sy == null) return; const dx = e.clientX - sx; const dy = e.clientY - sy; (e.currentTarget as any)._dx = dx; (e.currentTarget as any)._dy = dy; e.currentTarget.style.transform = `translate(${dx}px, ${dy}px)`; e.currentTarget.style.transition = "none"; }}
+                onPointerUp={(e) => { const dx = (e.currentTarget as any)._dx || 0; const dy = (e.currentTarget as any)._dy || 0; const abx = Math.abs(dx), aby = Math.abs(dy); e.currentTarget.style.transition = "transform 180ms ease"; e.currentTarget.style.transform = "translate(0,0)"; if (abx > 60 && abx > aby) { setPhotoIdx((i) => (dx > 0 ? (i > 0 ? i - 1 : gallery.length - 1) : (i + 1) % gallery.length)); } else if (aby > 80 && aby > abx) { setShowPhoto(false); } (e.currentTarget as any)._sx = null; (e.currentTarget as any)._sy = null; }}
+                style={{ touchAction: "none" }}
+              >
+                {/^https?:\/\//.test(gallery[photoIdx]) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} className="rounded-lg w-full h-auto" loading="lazy" decoding="async" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+                ) : (
+                  <Image src={gallery[photoIdx]} alt={`Photo of ${horse.name}`} width={1200} height={800} className="rounded-lg w-full h-auto" placeholder="blur" blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
+                )}
+              </div>
               <div className="mt-3 flex justify-between gap-2">
                 <button type="button" onClick={() => setShowPhoto(false)} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Close</button>
                 {gallery.length > 1 && (<div className="flex items-center gap-2"><button type="button" onClick={() => setPhotoIdx((i) => (i > 0 ? i - 1 : gallery.length - 1))} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Prev</button><button type="button" onClick={() => setPhotoIdx((i) => (i + 1) % gallery.length)} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-700">Next</button></div>)}

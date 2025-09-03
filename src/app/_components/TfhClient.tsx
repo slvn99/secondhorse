@@ -6,6 +6,7 @@ import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
 import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS } from "@/lib/tfh";
 import FiltersModal from "./FiltersModal";
+import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
 
 export default function TfhClient({ horses }: { horses: Horse[] }) {
@@ -34,7 +35,10 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
   }, []);
 
-  const { gender, minAge, maxAge } = useTfhFilters();
+  const { gender, minAge, maxAge, clearFilters } = useTfhFilters();
+  const [kbHint, setKbHint] = useState<boolean>(() => {
+    try { return !localStorage.getItem("tfh_kb_hint_seen"); } catch { return true; }
+  });
   const filtered = useMemo(() => {
     return withIds.filter((h) => {
       if (gender !== "All" && h.gender !== gender) return false;
@@ -74,6 +78,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           setUndoToastOpen("Undid last swipe");
         }
       }
+      if (kbHint) { try { localStorage.setItem("tfh_kb_hint_seen", "1"); } catch {} setKbHint(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -171,6 +176,16 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     <div className="relative z-10 h-full w-full">
       <div className="flex flex-col h-full">
         <div className="flex-1 p-3 sm:p-6 pb-20 md:pb-0 flex flex-col items-stretch">
+          {/* Filter summary bar */}
+          <div className="mb-2 -mt-1 flex flex-wrap items-center gap-2 text-[11px] text-neutral-200">
+            <button type="button" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="hidden md:inline-flex rounded-full bg-neutral-800/80 border border-neutral-700 px-2 py-1 hover:bg-neutral-700">Filters</button>
+            {gender !== "All" && (<span className="rounded-full bg-pink-600/20 border border-pink-500/30 text-pink-200 px-2 py-1">{gender}</span>)}
+            {minAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Min {minAge}</span>)}
+            {maxAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Max {maxAge}</span>)}
+            {(gender !== "All" || minAge !== "" || maxAge !== "") && (
+              <button type="button" onClick={clearFilters} className="ml-1 underline text-neutral-300 hover:text-white">Clear</button>
+            )}
+          </div>
           {tab === "browse" ? (
             <>
               <HorseSwiper
@@ -216,6 +231,9 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
                   </button>
                 </div>
+              )}
+              {kbHint && (
+                <div className="-mt-3 text-center text-[11px] text-neutral-300">Tip: use ←/→ to swipe, Z to undo</div>
               )}
               {/* Removed text undo link; dedicated button provided above. */}
             </>
@@ -263,6 +281,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       </div>
       <FiltersModal />
       {undoToastOpen && <Toast message={undoToastOpen} type="info" />}
+      <CoachMarks />
     </div>
   );
 }

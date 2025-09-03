@@ -6,6 +6,22 @@ import type { Horse } from "@/lib/horses";
 
 export default function MatchesView({ matches, onRemove }: { matches: Horse[]; onRemove?: (name: string) => void }) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const shareProfile = async (horse: Horse) => {
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("p", encodeURIComponent(horse.name));
+      u.searchParams.delete("id");
+      const link = u.toString();
+      const title = `${horse.name} – Second Horse Dating`;
+      const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
+      if ((navigator as any).share) {
+        try { await (navigator as any).share({ title, text, url: link }); return; } catch (err: any) { if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return; }
+      }
+      try { await navigator.clipboard.writeText(`${text}\n${link}`); setCopied(horse.name); setTimeout(() => setCopied(null), 1500); } catch {}
+    } catch {}
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedHorse(null); };
@@ -36,6 +52,14 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
                   Remove
                 </button>
               )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); shareProfile(horse); }}
+                title="Share profile"
+                className="text-[11px] text-blue-300 hover:text-blue-200 underline"
+              >
+                {copied === horse.name ? "Copied!" : "Share"}
+              </button>
             </div>
           </button>
         ))}

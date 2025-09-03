@@ -44,17 +44,20 @@ export default function FiltersModal() {
           </div>
           <div className="mt-3 space-y-3">
             <div>
-              <label className="text-sm text-neutral-300">Gender</label>
-              <select
-                className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
-                value={gender}
-                onChange={(e) => setGender(e.target.value as GenderFilter)}
-              >
-                <option>All</option>
-                <option>Mare</option>
-                <option>Stallion</option>
-                <option>Gelding</option>
-              </select>
+              <div className="text-sm text-neutral-300 mb-1">Gender</div>
+              <div className="flex flex-wrap gap-2">
+                {["All","Mare","Stallion","Gelding"].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(g as GenderFilter)}
+                    className={`px-3 py-1.5 rounded-full text-sm border ${gender===g?"bg-yellow-500 text-black border-yellow-400":"bg-neutral-900 text-neutral-100 border-neutral-700 hover:bg-neutral-800"}`}
+                    aria-pressed={gender===g}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="text-sm text-neutral-300">Min age
