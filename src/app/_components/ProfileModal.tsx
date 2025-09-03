@@ -37,10 +37,10 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
       {/* Full-screen overlay */}
       <div className="fixed inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
       {/* Centered modal wrapper with padding separate from overlay to avoid gaps */}
-      <div className="relative z-10 flex min-h-full items-center justify-center p-4 sm:p-6">
+      <div className="relative z-10 flex min-h-full items-start justify-center px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pb-6 sm:pt-8">
         <div
           className="w-full max-w-md sm:max-w-lg bg-neutral-900/95 backdrop-blur rounded-2xl border border-gray-700 shadow-2xl text-left overflow-hidden flex flex-col"
-          style={{ maxHeight: 'calc(100dvh - var(--footer-height, 3rem) - env(safe-area-inset-bottom) - 6rem)' }}
+          style={{ maxHeight: 'calc(100dvh - var(--footer-height, 3rem) - env(safe-area-inset-bottom) - 4rem)' }}
           role="dialog"
           aria-modal="true"
         >
