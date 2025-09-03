@@ -1,0 +1,24 @@
+services:
+  codex:
+    image: codex-cli:latest
+    container_name: codex-yolo
+    stdin_open: true
+    tty: true
+    read_only: true
+    working_dir: /workspace
+    volumes:
+      - "C:/Users/svnoo/documents/github/personal/secondhorse:/workspace"
+      - "C:/Users/svnoo/.codex:/root/.codex"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+      - /run:rw,size=64m
+      - /var/tmp:rw,size=512m
+      - /root:rw,size=2g
+    environment:
+      TERM: xterm-256color
+      PROMPT_TOOLKIT_NO_CPR: "1"
+      XDG_CACHE_HOME: /root/.cache
+      XDG_CONFIG_HOME: /root/.config
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+    network_mode: bridge
+    restart: "no"

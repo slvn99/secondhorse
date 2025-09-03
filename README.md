@@ -1,28 +1,109 @@
-Second Horse Dating – Root Drop‑in (mounts at /)
+Second Horse Dating (Tinder‑for‑Horses)
 
-How to use
-- Copy `src/app/` from this folder into your new repo’s `src/app/` (it will become your site root).
-- Ensure the following public assets exist in your new repo under `public/TFH/`:
-  - `Tinder-for-Horses-cover-image.png`
-  - `Tinder-for-Horses-background.png`
-  - `tfh-og-image.png`
-  - `horse_holding_a_fish.png`
-  - `horse_in_a_gym.png`
-  - `horse_on_a_hike.png`
-  - `horse_on_beach_holiday_south_europe.png`
-  - `horse_partying.png`
-- Environment variables (Vercel Project → Settings → Environment Variables):
-  - `DATABASE_URL` (Neon Postgres URL)
-  - Optional: `BLOB_READ_WRITE_TOKEN` (for image uploads to Vercel Blob)
-  - Optional: `ALLOWED_HOSTS` (comma-separated hostnames for CSRF allowlist in the form handler)
+**Overview**
+- **What**: A playful swipe UI to browse horse profiles, save matches locally, and optionally accept new profile submissions.
+- **Where**: App mounts at `/` (home). Profile creation lives at `/new`. Basic health check at `/api/health`.
+- **Data**: Reads from Neon Postgres when `DATABASE_URL` is set; otherwise falls back to local seed data in `src/lib/horses.ts`.
 
-Notes
-- This variant mounts the app at `/`. The profile creation page is at `/new`.
-- All imports are relative; no `@/*` alias is required.
-- The UI text uses the product name “Second Horse Dating”. The phrase “tinder for horses” may appear in tagline copy only.
-- Moderation dashboard: approvals happen via https://samvannoord.nl/moderation (human review before publishing).
+**Key Features**
+- **Swipe deck**: Like/dislike with buttons or keyboard (Left/Right, Enter). Undo via `Z`.
+- **Saved matches**: Stored in `localStorage`, with a dedicated Matches view.
+- **Filters**: Gender and age range; persists in `localStorage`.
+- **Deep linking**: URL reflects the current profile; share button copies a direct link.
+- **Profile submissions**: `/new` accepts URLs and file uploads (Vercel Blob when configured). Optional hCaptcha in production.
+- **Project info + sidebar**: Collapsible sidebar with project notes and version/date from Git.
+- **Analytics**: Vercel Analytics integrated.
 
-Troubleshooting
-- Error "Cannot find module './586.js'" from `.next/server/...` usually means a stale or corrupted Next.js build cache. Run `npm run clean` and restart dev (`npm run dev`). If it persists, `npm run reset` to reinstall deps and rebuild.
-- Ensure Node >= 18.18 or 20.x.
-- On Windows, disable antivirus/file-sync locks on `.next/` while running dev.
+**Tech Stack**
+- **Framework**: `Next.js 15` (App Router, server actions)
+- **Language**: TypeScript, React 18
+- **Styling**: Tailwind CSS, PostCSS, Autoprefixer
+- **DB**: Neon serverless Postgres via `@neondatabase/serverless` (optional)
+- **Storage**: Vercel Blob for images via `@vercel/blob` (optional; dev fallback to `public/uploads`)
+- **Testing**: Vitest (`tests/`)
+- **Linting**: ESLint (`next/core-web-vitals`)
+- **Misc**: Vercel Analytics, small audio helper with `tone` to satisfy autoplay policies
+
+**Project Structure**
+- `src/app`: App Router pages, layouts, server actions
+  - `page.tsx`: Home feed; reads DB (if available) else local seed
+  - `layout.tsx`: Shell, sidebars, footer, analytics
+  - `_components/`: Client components (`TfhClient`, `HorseSwiper`, `MatchesView`, etc.)
+  - `_lib/uploads.ts`: Server action helper for image handling (Blob/dev‑disk)
+  - `new/`: Profile creation form and client helpers
+  - `api/health/route.ts`: Minimal JSON health endpoint
+- `src/lib`: Domain utilities and data (`horses.ts`, `tfh.ts`, `git.ts`, etc.)
+- `src/types`: Local type shims
+- `public/TFH`: Static images and audio used by the UI
+- `scripts/`: Dev utilities (`clean.sh`)
+- `tests/`: Vitest tests (e.g., seed data validation)
+- `v2/`: Reference only; do not depend on it
+
+**Getting Started**
+- **Requirements**: Node `>= 18.18` or `>= 20`, npm
+- **Install**: `npm install`
+- **Dev server**: `npm run dev` then open `http://localhost:3000`
+- **Type check**: `npm run type-check`
+- **Lint**: `npm run lint` (auto‑fix: `npm run lint:fix`)
+
+**Scripts**
+- `npm run dev`: Start local dev with HMR
+- `npm run build`: Production build
+- `npm start`: Run compiled server
+- `npm run lint`: ESLint checks (`next/core-web-vitals`)
+- `npm run type-check`: TypeScript without emit
+- `npm run clean`: Remove `.next/.turbo` caches
+- `npm run reset`: Clean caches, reinstall deps, rebuild
+- `npm test`: Run Vitest once
+- `npm run test:watch`: Vitest in watch mode
+- `npm run coverage`: Coverage report (v8)
+
+**Environment Variables**
+- `DATABASE_URL`: Neon Postgres connection string. Enables reading/writing profiles.
+- `BLOB_READ_WRITE_TOKEN` (optional): Enables public image uploads to Vercel Blob on `/new`.
+- `ALLOWED_HOSTS` (optional): Comma‑separated hostnames allowed to submit the form (CSRF guard).
+- `HCAPTCHA_SECRET` (optional): When set in production, `/new` requires hCaptcha.
+- `MODERATION_SESSION_SECRET` (recommended in prod): Secret for signing moderation sessions.
+- `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
+- `VERCEL_GIT_COMMIT_SHA`/`GITHUB_SHA`/`COMMIT_SHA` (optional): Used for version label in the UI.
+
+Place secrets in `.env.local` and never commit them. Provide non‑secret examples via `.env.example` if needed.
+
+**Data & Storage Behavior**
+- **Read path**: `src/app/page.tsx` attempts DB first (via Neon); on failure or unset `DATABASE_URL`, it falls back to `src/lib/horses.ts` seed data.
+- **Write path**: `/new` uses a server action. On production with `HCAPTCHA_SECRET`, hCaptcha must pass. Photos are stored via:
+  - Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set (public URLs), or
+  - Local dev fallback in `public/uploads` when not in production.
+- **Local state**: Matches, filters, and deck index persist in `localStorage`.
+
+**Images, Assets, and Security Headers**
+- Remote images are whitelisted in `next.config.ts` (Unsplash, Notion, Vercel Blob, etc.).
+- Rewrites expose TFH assets under stable paths (e.g., `/TFH/...`). Ensure the images in `public/TFH` remain present.
+- Strict headers are configured: CSP, HSTS, X‑Frame‑Options, Referrer‑Policy, Permissions‑Policy.
+
+**Testing**
+- Run all tests: `npm test`
+- Watch mode: `npm run test:watch`
+- Coverage: `npm run coverage` (HTML report in `coverage/`)
+- Target: Keep ≥80% coverage for changed code. Example test: `tests/lib/horses.test.ts` validates seed data shape.
+
+**Deployment**
+- Designed for Vercel (Next.js 15). Ensure required env vars are set on the project.
+- Production constraints:
+  - Set `MODERATION_SESSION_SECRET` and `ALLOWED_HOSTS`.
+  - Add `HCAPTCHA_SECRET` if you want captcha on `/new`.
+  - Add `BLOB_READ_WRITE_TOKEN` to allow file uploads; without it, uploads are disabled in prod.
+
+**Troubleshooting**
+- **Stale build cache**: Error like `Cannot find module './586.js'` → `npm run clean` then `npm run dev`. If it persists: `npm run reset`.
+- **Node version**: Use Node `>= 18.18` or `>= 20`.
+- **Asset paths**: If images 404, verify `public/TFH` exists and Next rewrites are active.
+
+**Moderation**
+- Profiles are reviewed by a human via: `https://samvannoord.nl/moderation`.
+- The app sets a one‑time toast after form submission; moderation state is not synced back automatically.
+
+**Notes**
+- Keyboard shortcuts: Left/Right/Enter to swipe, `Z` to undo.
+- Health endpoint: `GET /api/health` returns `{ ok: true, timestamp }`.
+- TypeScript excludes `src/app/new/**/*` and `src/app/_lib/uploads.ts` from strict checking to ease server action ergonomics.
