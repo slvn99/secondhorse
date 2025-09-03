@@ -174,7 +174,8 @@ export function useTfhMatches(baseList: Horse[]) {
 }
 
 // Deterministic match chance based on user seed and horse name
-function xmur3(str: string) {
+// Deterministic hashing / RNG helpers (exported for reuse)
+export function xmur3(str: string) {
   let h = 1779033703 ^ str.length;
   for (let i = 0; i < str.length; i++) {
     h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
@@ -186,13 +187,26 @@ function xmur3(str: string) {
     return (h ^= h >>> 16) >>> 0;
   };
 }
-function mulberry32(a: number) {
+export function mulberry32(a: number) {
   return () => {
     let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+export function scoreForName(name: string, seed: string): number {
+  const sfn = xmur3(`${seed}|${name}`);
+  const rnd = mulberry32(sfn());
+  return rnd();
+}
+
+// Stable ID derivation for local entries (FNV‑1a 32‑bit)
+export function stableIdForName(name: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < name.length; i++) h = (h ^ name.charCodeAt(i)) * 16777619;
+  return (h >>> 0).toString(16);
 }
 
 export function shouldMatchFor(name: string, threshold = 0.6): boolean {
@@ -205,9 +219,7 @@ export function shouldMatchFor(name: string, threshold = 0.6): boolean {
     }
     seed = s || seed;
   } catch {}
-  const sfn = xmur3(`${seed}|${name}`);
-  const rnd = mulberry32(sfn());
-  return rnd() > threshold;
+  return scoreForName(name, seed) > threshold;
 }
 
 export type GenderFilter = "All" | "Mare" | "Stallion" | "Gelding";

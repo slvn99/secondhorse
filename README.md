@@ -67,7 +67,9 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
 - `VERCEL_GIT_COMMIT_SHA`/`GITHUB_SHA`/`COMMIT_SHA` (optional): Used for version label in the UI.
 
-Place secrets in `.env.local` and never commit them. Provide non‑secret examples via `.env.example` if needed.
+Place secrets in `.env.local` and never commit them. A sanitized `.env.example` is included for local setup.
+
+Security note: a previously committed `.env.local` has been removed from the repo. You should rotate/revoke any exposed credentials in that file and, if needed, purge it from git history (e.g., with `git filter-repo`).
 
 **Data & Storage Behavior**
 - **Read path**: `src/app/page.tsx` attempts DB first (via Neon); on failure or unset `DATABASE_URL`, it falls back to `src/lib/horses.ts` seed data.

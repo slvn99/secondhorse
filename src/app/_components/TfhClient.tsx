@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
-import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS, shouldMatchFor, TFH_STORAGE } from "@/lib/tfh";
+import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS, shouldMatchFor, TFH_STORAGE, stableIdForName, scoreForName } from "@/lib/tfh";
 import FiltersModal from "./FiltersModal";
 import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
@@ -12,14 +12,7 @@ import Toast from "./Toast";
 export default function TfhClient({ horses }: { horses: Horse[] }) {
   const baseList = useMemo(() => horses ?? [], [horses]);
   // Ensure every horse has an id (prefer DB id, else derive a stable hash from name)
-  const withIds = useMemo(() => {
-    const hash = (s: string) => {
-      let h = 2166136261;
-      for (let i = 0; i < s.length; i++) h = (h ^ s.charCodeAt(i)) * 16777619;
-      return (h >>> 0).toString(16);
-    };
-    return baseList.map((h) => (h.id ? h : ({ ...h, id: `l_${hash(h.name)}` } as any)));
-  }, [baseList]);
+  const withIds = useMemo(() => baseList.map((h) => (h.id ? h : ({ ...h, id: `l_${stableIdForName(h.name)}` } as any))), [baseList]);
   const { matches, addMatch, removeMatch } = useTfhMatches(baseList);
   const lastAction = useRef<{ horse: Horse; liked: boolean } | null>(null);
   const [undoToastOpen, setUndoToastOpen] = useState<string | null>(null);
@@ -112,7 +105,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       const qname = sp.get("p") || sp.get("profile");
       hasQuery = !!(qid || qname);
       if (qid || qname) {
-        const targetId = qid || (qname ? `l_${(function (s:string){let h=2166136261;for(let i=0;i<s.length;i++)h=(h^s.charCodeAt(i))*16777619;return (h>>>0).toString(16);})(decodeURIComponent(qname))}` : undefined);
+        const targetId = qid || (qname ? `l_${stableIdForName(decodeURIComponent(qname))}` : undefined);
         const idx = filtered.findIndex((h) => (h as any).id === targetId);
         if (idx >= 0) {
           // Defer to win over any localStorage index restoration
@@ -146,7 +139,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   useEffect(() => {
     const onOpen = (e: Event) => {
       const detail = (e as CustomEvent<{ id?: string; name?: string }>).detail;
-      const targetId = detail?.id || (detail?.name ? `l_${(function (s:string){let h=2166136261;for(let i=0;i<s.length;i++)h=(h^s.charCodeAt(i))*16777619;return (h>>>0).toString(16);})(detail.name)}` : undefined);
+      const targetId = detail?.id || (detail?.name ? `l_${stableIdForName(detail.name)}` : undefined);
       if (!targetId && !detail?.name) return;
       setTab("browse");
       setPendingOpen({ id: targetId, name: detail?.name });
@@ -159,12 +152,9 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   useEffect(() => {
     if (!pendingOpen) return;
     const seed = (() => { try { return localStorage.getItem(TFH_STORAGE.SEED) || "default"; } catch { return "default"; } })();
-    const xmur3 = (str: string) => { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); } return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return (h ^= h >>> 16) >>> 0; }; };
-    const mulberry32 = (a: number) => () => { let t = (a += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    const scoreFor = (name: string, s: string) => { const seedFn = xmur3(`${s}|${name}`); const rnd = mulberry32(seedFn()); return rnd(); };
 
     const tryResolve = (list: Horse[]) => {
-      const deckSorted = [...list].sort((a, b) => scoreFor((a as any).name, seed) - scoreFor((b as any).name, seed));
+      const deckSorted = [...list].sort((a, b) => scoreForName((a as any).name, seed) - scoreForName((b as any).name, seed));
       const idx = deckSorted.findIndex((h) => (h as any).id === pendingOpen?.id || h.name === pendingOpen?.name);
       if (idx >= 0) { setIndex(idx); setPendingOpen(null); return true; }
       return false;

@@ -5,7 +5,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import { horses as allHorses } from "@/lib/horses";
 import type { Horse } from "@/lib/horses";
-import { TFH_EVENTS, TFH_STORAGE } from "@/lib/tfh";
+import { TFH_EVENTS, TFH_STORAGE, scoreForName } from "@/lib/tfh";
 
 export default function HorseSwiper({
   onRate,
@@ -39,22 +39,15 @@ export default function HorseSwiper({
   const [deck, setDeck] = useState(baseList);
 
   const [seed, setSeed] = useState<string | null>(null);
-  const xmur3 = useCallback((str: string) => {
-    let h = 1779033703 ^ str.length;
-    for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
-    return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return (h ^= h >>> 16) >>> 0; };
-  }, []);
-  const mulberry32 = useCallback((a: number) => () => { let t = (a += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }, []);
-  const scoreFor = useCallback((name: string, s: string) => { const seedFn = xmur3(`${s}|${name}`); const rnd = mulberry32(seedFn()); return rnd(); }, [xmur3, mulberry32]);
 
   useEffect(() => { try { let s = localStorage.getItem("tfh_seed"); if (!s) { s = Math.random().toString(36).slice(2); localStorage.setItem("tfh_seed", s); } setSeed(s); } catch { setSeed("default"); } }, []);
   useEffect(() => { const onReset = () => { let s = Math.random().toString(36).slice(2); try { localStorage.setItem("tfh_seed", s); } catch {} setSeed(s); }; window.addEventListener("tfh:reset", onReset as EventListener); return () => window.removeEventListener("tfh:reset", onReset as EventListener); }, []);
   useEffect(() => {
     if (disableShuffle) { setDeck(baseList); return; }
     if (!seed) { setDeck(baseList); return; }
-    const arr = [...baseList].sort((a, b) => scoreFor(a.name, seed) - scoreFor(b.name, seed));
+    const arr = [...baseList].sort((a, b) => scoreForName(a.name, seed) - scoreForName(b.name, seed));
     setDeck(arr);
-  }, [baseList, seed, scoreFor, disableShuffle]);
+  }, [baseList, seed, disableShuffle]);
 
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
@@ -63,8 +56,46 @@ export default function HorseSwiper({
   const [dragging, setDragging] = useState(false);
   const [showPhoto, setShowPhoto] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailsRef = useRef<HTMLDivElement | null>(null);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
+  // Smooth height/opacity animation for details
+  useEffect(() => {
+    const el = detailsRef.current;
+    if (!el) return;
+    el.style.overflow = "hidden";
+    el.style.willChange = "height, opacity";
+    el.style.transition = "height 300ms ease, opacity 300ms ease";
+    if (detailsOpen) {
+      el.style.opacity = "1";
+      if (el.style.height === "auto") el.style.height = "0px";
+      // force reflow
+      void el.offsetHeight;
+      el.style.height = `${el.scrollHeight}px`;
+    } else {
+      if (el.style.height === "auto") {
+        el.style.height = `${el.scrollHeight}px`;
+        // force reflow
+        void el.offsetHeight;
+      }
+      el.style.opacity = "0";
+      el.style.height = "0px";
+    }
+  }, [detailsOpen]);
+
+  // Keep height in sync on transition end while open
+  useEffect(() => {
+    const el = detailsRef.current;
+    if (!el) return;
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName !== "height") return;
+      if (detailsOpen) {
+        el.style.height = "auto";
+      }
+    };
+    el.addEventListener("transitionend", onEnd as any);
+    return () => el.removeEventListener("transitionend", onEnd as any);
+  }, [detailsOpen]);
 
   // details panel now uses a scrollable container with a max-height for readability on mobile
 
@@ -249,21 +280,27 @@ export default function HorseSwiper({
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
           <h3 className="text-2xl font-semibold">{horse.name}, {horse.age}</h3>
           <p className="text-sm text-gray-300 mt-1">{horse.breed} • {horse.gender} • {horse.heightCm} cm • {horse.location}</p>
-          <div className="mt-2 relative cursor-pointer" role="button" aria-expanded={detailsOpen} onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }} onPointerDown={(e) => e.stopPropagation()} title={detailsOpen ? "Tap to collapse" : "Tap to expand"}>
-            <div id="tfh-details" className={clsx(
-              "pr-1 overflow-hidden transition-[max-height] duration-500 ease-in-out",
-              detailsOpen ? "max-h-[40vh]" : "max-h-5"
-            )}>
-              <p className={clsx("text-sm text-white", detailsOpen ? "leading-5" : "line-clamp-1")}>{shortDesc}</p>
-              <div className={clsx(
-                "text-xs text-white/90 transition-opacity duration-300",
-                detailsOpen ? "opacity-100 mt-2" : "opacity-0 max-h-0 overflow-hidden"
-              )}>
-                <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 text-pink-100 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
-                {previewDisciplines.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 text-blue-100 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>
-                )}
-              </div>
+          <div
+            className="mt-2 overflow-hidden relative cursor-pointer"
+            role="button"
+            aria-expanded={detailsOpen}
+            onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={detailsOpen ? "Tap to collapse" : "Tap to expand"}
+          >
+            <p className={clsx("text-sm text-white leading-5", !detailsOpen && "line-clamp-1")}>{shortDesc}</p>
+          </div>
+          <div
+            ref={detailsRef}
+            id="tfh-details"
+            className="mt-2 transition-[height,opacity] ease-in-out"
+            style={{ height: 0, opacity: 0 }}
+          >
+            <div className="text-xs text-white/90">
+              <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 text-pink-100 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
+              {previewDisciplines.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 text-blue-100 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>
+              )}
             </div>
           </div>
           <button
