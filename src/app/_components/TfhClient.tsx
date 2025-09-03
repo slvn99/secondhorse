@@ -36,9 +36,12 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   }, []);
 
   const { gender, minAge, maxAge, clearFilters } = useTfhFilters();
-  const [kbHint, setKbHint] = useState<boolean>(() => {
-    try { return !localStorage.getItem("tfh_kb_hint_seen"); } catch { return true; }
-  });
+  const [mounted, setMounted] = useState(false);
+  const [kbHint, setKbHint] = useState<boolean>(false);
+  useEffect(() => {
+    setMounted(true);
+    try { setKbHint(!localStorage.getItem("tfh_kb_hint_seen")); } catch { setKbHint(true); }
+  }, []);
   const filtered = useMemo(() => {
     return withIds.filter((h) => {
       if (gender !== "All" && h.gender !== gender) return false;
@@ -82,7 +85,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, setIndex, tab, removeMatch]);
+  }, [index, setIndex, tab, removeMatch, kbHint]);
 
   // Deep-linking: read ?p= or ?profile= on first mount against current filtered list
   const didInitFromQuery = useRef(false);
@@ -178,12 +181,15 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         <div className="flex-1 p-3 sm:p-6 pb-20 md:pb-0 flex flex-col items-stretch">
           {/* Filter summary bar */}
           <div className="mb-2 -mt-1 flex flex-wrap items-center gap-2 text-[11px] text-neutral-200">
-            <button type="button" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="hidden md:inline-flex rounded-full bg-neutral-800/80 border border-neutral-700 px-2 py-1 hover:bg-neutral-700">Filters</button>
-            {gender !== "All" && (<span className="rounded-full bg-pink-600/20 border border-pink-500/30 text-pink-200 px-2 py-1">{gender}</span>)}
-            {minAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Min {minAge}</span>)}
-            {maxAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Max {maxAge}</span>)}
-            {(gender !== "All" || minAge !== "" || maxAge !== "") && (
-              <button type="button" onClick={clearFilters} className="ml-1 underline text-neutral-300 hover:text-white">Clear</button>
+            {mounted && (
+              <>
+                {gender !== "All" && (<span className="rounded-full bg-pink-600/20 border border-pink-500/30 text-pink-200 px-2 py-1">{gender}</span>)}
+                {minAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Min {minAge}</span>)}
+                {maxAge !== "" && (<span className="rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-200 px-2 py-1">Max {maxAge}</span>)}
+                {(gender !== "All" || minAge !== "" || maxAge !== "") && (
+                  <button type="button" onClick={clearFilters} className="ml-1 underline text-neutral-300 hover:text-white">Clear</button>
+                )}
+              </>
             )}
           </div>
           {tab === "browse" ? (
@@ -232,7 +238,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                   </button>
                 </div>
               )}
-              {kbHint && (
+              {mounted && kbHint && (
                 <div className="-mt-3 text-center text-[11px] text-neutral-300">Tip: use ←/→ to swipe, Z to undo</div>
               )}
               {/* Removed text undo link; dedicated button provided above. */}
