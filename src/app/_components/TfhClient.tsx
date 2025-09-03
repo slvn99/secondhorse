@@ -173,27 +173,47 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         <div className="flex-1 p-3 sm:p-6 pb-20 md:pb-0 flex flex-col items-stretch">
           {tab === "browse" ? (
             <>
-              <HorseSwiper onRate={onRate} horses={filtered} index={index} onIndexChange={setIndex} controlsRef={swiperControls} showActions={false} disableShuffle={urlHasTarget} />
+              <HorseSwiper
+                onRate={onRate}
+                horses={filtered}
+                index={index}
+                onIndexChange={setIndex}
+                controlsRef={swiperControls}
+                showActions={false}
+                disableShuffle={urlHasTarget}
+                onUndo={undoLast}
+                showUndo={hasActedThisSession}
+                onShare={async () => {
+                  try {
+                    const u = new URL(window.location.href);
+                    const link = u.toString();
+                    const h = index >= 0 && index < filtered.length ? filtered[index] : null;
+                    const title = h ? `${h.name} – Second Horse Dating` : "Second Horse Dating";
+                    const text = h ? `Check out ${h.name}'s profile` : "Check out this profile";
+                    if (typeof navigator !== "undefined" && (navigator as any).share) {
+                      try {
+                        await (navigator as any).share({ title, text, url: link });
+                        return;
+                      } catch (err: any) {
+                        // If user cancels share, do nothing; otherwise fallback
+                        if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) {
+                          return;
+                        }
+                      }
+                    }
+                    // Fallback: copy to clipboard
+                    try { await navigator.clipboard.writeText(link); } catch {}
+                    setUndoToastOpen("Profile link copied");
+                  } catch {}
+                }}
+              />
               {index < filtered.length && (
                 <div className="mt-3 flex items-center justify-center gap-10 h-14 sm:h-16">
-                  <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike">
+                  <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike" title="Dislike">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
                   </button>
-                  {hasActedThisSession && (
-                    <button onClick={undoLast} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black transition" aria-label="Undo">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-6 w-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 110 12h-3" />
-                      </svg>
-                    </button>
-                  )}
-                  <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like">
+                  <button onClick={() => swiperControls.current?.like()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition" aria-label="Like" title="Like">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path d="M11.645 20.87l-.007-.003-.022-.012a15.247 15.247 0 0 1-.382-.226 25.18 25.18 0 0 1-4.415-3.194C4.06 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-2.06 6.86-5.32 9.94a25.172 25.172 0 0 1-4.415 3.194 15.247 15.247 0 0 1-.382.226l-.022.012-.007.003a.75.75 0 0 1-.664 0z" /></svg>
-                  </button>
-                  <button onClick={() => { try { const u = new URL(window.location.href); const link = u.toString(); navigator.clipboard.writeText(link); setUndoToastOpen("Profile link copied"); } catch {} }} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition" aria-label="Share profile">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-6 w-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                    </svg>
                   </button>
                 </div>
               )}
