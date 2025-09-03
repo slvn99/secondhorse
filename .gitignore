@@ -29,3 +29,4 @@ pnpm-debug.log*
 .env*.local
 
 /v2
+tsconfig.tsbuildinfo

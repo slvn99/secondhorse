@@ -189,7 +189,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                     const link = u.toString();
                     const h = index >= 0 && index < filtered.length ? filtered[index] : null;
                     const title = h ? `${h.name} – Second Horse Dating` : "Second Horse Dating";
-                    const text = h ? `Check out ${h.name}'s profile` : "Check out this profile";
+                    const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
                     if (typeof navigator !== "undefined" && (navigator as any).share) {
                       try {
                         await (navigator as any).share({ title, text, url: link });
@@ -202,13 +202,13 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                       }
                     }
                     // Fallback: copy to clipboard
-                    try { await navigator.clipboard.writeText(link); } catch {}
-                    setUndoToastOpen("Profile link copied");
+                    try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
+                    setUndoToastOpen("Share message copied");
                   } catch {}
                 }}
               />
               {index < filtered.length && (
-                <div className="mt-3 flex items-center justify-center gap-10 h-14 sm:h-16">
+                <div className="mt-3 mb-6 sm:mb-8 flex items-center justify-center gap-10 h-14 sm:h-16">
                   <button onClick={() => swiperControls.current?.dislike()} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition" aria-label="Dislike" title="Dislike">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
                   </button>
