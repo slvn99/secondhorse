@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Horse } from "@/lib/horses";
 import ProfileModal from "./ProfileModal";
+import ConfirmDialog from "./ConfirmDialog";
 
 export default function MatchesView({ matches, onRemove }: { matches: Horse[]; onRemove?: (name: string) => void }) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [confirmName, setConfirmName] = useState<string | null>(null);
 
   const shareProfile = async (horse: Horse) => {
     try {
@@ -73,14 +75,14 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
                     )}
                   </button>
                   {onRemove && (
-                    <button
+                  <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); onRemove(horse.name); }}
-                      title="Remove match"
-                      aria-label="Remove match"
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-red-300 hover:text-red-200"
+                      onClick={(e) => { e.stopPropagation(); setConfirmName(horse.name); }}
+                      title="Unmatch"
+                      aria-label="Unmatch"
+                      className="inline-flex items-center justify-center rounded-md border border-red-800/50 bg-transparent px-2.5 py-1 text-xs font-medium text-red-300 hover:bg-red-900/20"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
+                      Unmatch
                     </button>
                   )}
                 </div>
@@ -89,7 +91,24 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
         ))}
       </div>
 
-      {selectedHorse && <ProfileModal horse={selectedHorse} onClose={() => setSelectedHorse(null)} />}
+      {selectedHorse && (
+        <ProfileModal
+          horse={selectedHorse}
+          onClose={() => setSelectedHorse(null)}
+          onRemove={onRemove ? (name) => onRemove(name) : undefined}
+        />
+      )}
+      {onRemove && (
+        <ConfirmDialog
+          open={!!confirmName}
+          title="Unmatch this profile?"
+          message={<span>This will remove <strong>{confirmName}</strong> from your matches.</span>}
+          confirmText="Unmatch"
+          cancelText="Cancel"
+          onCancel={() => setConfirmName(null)}
+          onConfirm={() => { if (confirmName) onRemove(confirmName); setConfirmName(null); }}
+        />
+      )}
     </div>
   );
 }
