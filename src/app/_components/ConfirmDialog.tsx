@@ -29,7 +29,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-[1400]">
       <div className="fixed inset-0 bg-black/70" onClick={onCancel} aria-hidden="true" />
       <div className="relative z-10 flex min-h-full items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-neutral-900/95 backdrop-blur rounded-xl border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100">
+        <div className="w-full max-w-sm bg-neutral-900/95 backdrop-blur rounded-xl border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100" data-testid="confirm-dialog">
           <div className="px-5 py-4 border-b border-neutral-800">
             <h4 className="text-base font-semibold">{title}</h4>
           </div>
@@ -45,4 +45,3 @@ export default function ConfirmDialog({
     </div>
   );
 }
-

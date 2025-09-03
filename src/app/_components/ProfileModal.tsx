@@ -43,6 +43,7 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
           style={{ maxHeight: 'calc(100dvh - var(--footer-height, 3rem) - env(safe-area-inset-bottom) - 4rem)' }}
           role="dialog"
           aria-modal="true"
+          data-testid="profile-modal"
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-neutral-800/80 bg-neutral-900/95">
@@ -77,7 +78,7 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
           </div>
           {/* Body */}
           <div className="px-5 py-4 overflow-y-auto flex-1 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} data-testid="profile-image">
             {/^https?:\/\//.test(gallery[photoIndex] || '') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

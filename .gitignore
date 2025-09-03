@@ -32,3 +32,9 @@ pnpm-debug.log*
 tsconfig.tsbuildinfo
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+ 
+# Test coverage reports
+coverage/
+
+# Turbo cache (if used)
+.turbo/
