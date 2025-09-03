@@ -250,19 +250,21 @@ export default function HorseSwiper({
           <h3 className="text-2xl font-semibold">{horse.name}, {horse.age}</h3>
           <p className="text-sm text-gray-300 mt-1">{horse.breed} • {horse.gender} • {horse.heightCm} cm • {horse.location}</p>
           <div className="mt-2 relative cursor-pointer" role="button" aria-expanded={detailsOpen} onClick={(e) => { e.stopPropagation(); setDetailsOpen((v) => !v); }} onPointerDown={(e) => e.stopPropagation()} title={detailsOpen ? "Tap to collapse" : "Tap to expand"}>
-            {!detailsOpen ? (
-              <p className="text-sm text-white line-clamp-1">{shortDesc}</p>
-            ) : (
-              <div id="tfh-details" className="max-h-[40vh] overflow-y-auto pr-1">
-                <p className="text-sm leading-5 text-white">{shortDesc}</p>
-                <div className="text-xs text-white/90 mt-2">
-                  <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 text-pink-100 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
-                  {previewDisciplines.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 text-blue-100 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>
-                  )}
-                </div>
+            <div id="tfh-details" className={clsx(
+              "pr-1 overflow-hidden transition-[max-height] duration-500 ease-in-out",
+              detailsOpen ? "max-h-[40vh]" : "max-h-5"
+            )}>
+              <p className={clsx("text-sm text-white", detailsOpen ? "leading-5" : "line-clamp-1")}>{shortDesc}</p>
+              <div className={clsx(
+                "text-xs text-white/90 transition-opacity duration-300",
+                detailsOpen ? "opacity-100 mt-2" : "opacity-0 max-h-0 overflow-hidden"
+              )}>
+                <div className="flex flex-wrap gap-1">{previewInterests.map((i) => (<span key={i} className="bg-pink-600/20 text-pink-100 px-2 py-0.5 rounded-full text-xs">{i}</span>))}</div>
+                {previewDisciplines.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">{previewDisciplines.map((d) => (<span key={d} className="bg-blue-600/20 text-blue-100 px-2 py-0.5 rounded-full text-xs">{d}</span>))}</div>
+                )}
               </div>
-            )}
+            </div>
           </div>
           <button
             type="button"

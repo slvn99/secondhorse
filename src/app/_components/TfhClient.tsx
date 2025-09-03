@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
-import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS } from "@/lib/tfh";
+import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS, shouldMatchFor, TFH_STORAGE } from "@/lib/tfh";
 import FiltersModal from "./FiltersModal";
 import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
@@ -28,14 +28,17 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     lastAction.current = { horse: h, liked };
     try { localStorage.setItem("tfh_last_action", JSON.stringify({ name: h.name, liked })); } catch {}
     setHasActedThisSession(true);
-    if (liked) addMatch(h);
+    if (liked) {
+      // Always store as liked centrally; derivation to 'matches' is handled in useTfhMatches
+      addMatch(h);
+    }
   };
   const [tab, setTab] = useState<"browse" | "matches">("browse");
   const urlHasTarget = useMemo(() => {
     try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
   }, []);
 
-  const { gender, minAge, maxAge, clearFilters } = useTfhFilters();
+  const { gender, minAge, maxAge, clearFilters, setGender, setMinAge, setMaxAge } = useTfhFilters();
   const [mounted, setMounted] = useState(false);
   const [kbHint, setKbHint] = useState<boolean>(false);
   useEffect(() => {
@@ -62,6 +65,8 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   }, [setIndex]);
 
   const swiperControls = useRef<{ like: () => void; dislike: () => void; canAct: () => boolean } | null>(null);
+  const [pendingOpen, setPendingOpen] = useState<{ id?: string; name?: string } | null>(null);
+  const [overlayOpen, setOverlayOpen] = useState(false);
 
   // Keyboard controls: Left/Right = dislike/like, Z = undo
   useEffect(() => {
@@ -137,18 +142,49 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     } catch {}
   }, [index, filtered]);
 
-  // Jump to profile on TFH_EVENTS.OPEN_PROFILE without navigation
+  // Listen for open-profile request and store target id
   useEffect(() => {
     const onOpen = (e: Event) => {
       const detail = (e as CustomEvent<{ id?: string; name?: string }>).detail;
       const targetId = detail?.id || (detail?.name ? `l_${(function (s:string){let h=2166136261;for(let i=0;i<s.length;i++)h=(h^s.charCodeAt(i))*16777619;return (h>>>0).toString(16);})(detail.name)}` : undefined);
-      if (!targetId) return;
-      const idx = filtered.findIndex((h) => (h as any).id === targetId);
-      if (idx >= 0) setIndex(idx);
+      if (!targetId && !detail?.name) return;
+      setTab("browse");
+      setPendingOpen({ id: targetId, name: detail?.name });
     };
     window.addEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
     return () => window.removeEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
-  }, [filtered, setIndex]);
+  }, []);
+
+  // Resolve pending open to the correct shuffled deck index; widen filters if needed
+  useEffect(() => {
+    if (!pendingOpen) return;
+    const seed = (() => { try { return localStorage.getItem(TFH_STORAGE.SEED) || "default"; } catch { return "default"; } })();
+    const xmur3 = (str: string) => { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); } return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return (h ^= h >>> 16) >>> 0; }; };
+    const mulberry32 = (a: number) => () => { let t = (a += 0x6d2b79f5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const scoreFor = (name: string, s: string) => { const seedFn = xmur3(`${s}|${name}`); const rnd = mulberry32(seedFn()); return rnd(); };
+
+    const tryResolve = (list: Horse[]) => {
+      const deckSorted = [...list].sort((a, b) => scoreFor((a as any).name, seed) - scoreFor((b as any).name, seed));
+      const idx = deckSorted.findIndex((h) => (h as any).id === pendingOpen?.id || h.name === pendingOpen?.name);
+      if (idx >= 0) { setIndex(idx); setPendingOpen(null); return true; }
+      return false;
+    };
+
+    // Try within current filters first
+    if (tryResolve(filtered)) return;
+    // Widen filters and try against full list
+    setGender("All"); setMinAge(""); setMaxAge("");
+    setTimeout(() => { tryResolve(withIds); }, 0);
+  }, [pendingOpen, filtered, withIds, setGender, setMinAge, setMaxAge, setIndex]);
+
+  // Listen for overlay open/close to hide mobile navbar when modals are shown
+  useEffect(() => {
+    const onOverlay = (e: Event) => {
+      try { setOverlayOpen(!!(e as CustomEvent<{ open: boolean }>).detail?.open); } catch { setOverlayOpen(false); }
+    };
+    window.addEventListener('tfh:overlay', onOverlay as EventListener);
+    return () => window.removeEventListener('tfh:overlay', onOverlay as EventListener);
+  }, []);
 
   // Restore last action on mount (for persisted undo)
   useEffect(() => {
@@ -248,6 +284,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           )}
         </div>
         {/* Mobile bottom navbar */}
+        {!overlayOpen && (
         <div className="md:hidden">
           <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
             <div className="grid grid-cols-5 gap-2">
@@ -284,6 +321,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
             </div>
           </div>
         </div>
+        )}
       </div>
       <FiltersModal />
       {undoToastOpen && <Toast message={undoToastOpen} type="info" />}

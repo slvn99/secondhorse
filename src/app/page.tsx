@@ -81,11 +81,15 @@ export default async function SecondHorsePage() {
   const dbHorses = await loadHorsesFromDb();
   const horses = dbHorses.length ? dbHorses : localHorses;
   return (
-    <div className="relative w-full overflow-y-auto h-full">
-      <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority />
-      <div className="absolute inset-0 bg-black/50" />
-      <div className="relative z-10 h-full w-full text-white">
-        <div className="h-full w-full">
+    <div className="relative w-full h-full">
+      {/* Fixed background layer to keep visuals consistent across mobile/desktop */}
+      <div className="fixed inset-0 -z-10">
+        <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority />
+        <div className="absolute inset-0 bg-black/50" />
+      </div>
+      {/* Foreground content scrolls independently */}
+      <div className="relative z-10 h-full w-full text-white overflow-hidden">
+        <div className="h-full w-full overflow-y-auto">
           <TfhClient horses={horses} />
         </div>
       </div>

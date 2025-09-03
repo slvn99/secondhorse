@@ -24,24 +24,34 @@ function dispatch(name: string, detail?: any) {
   try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch {}
 }
 
+type MatchEntry = { name: string; snap?: Partial<Horse> };
+
 export function useTfhMatches(baseList: Horse[]) {
-  const [matches, setMatches] = useState<Horse[]>([]);
+  // CENTRAL SOURCE OF TRUTH: liked entries with optional snapshot for rendering
+  const [liked, setLiked] = useState<MatchEntry[]>([]);
+
+  const byName = useMemo(() => new Map(baseList.map((h) => [h.name, h] as const)), [baseList]);
 
   const load = useCallback(() => {
     try {
       const raw = localStorage.getItem(TFH_STORAGE.MATCHES);
-      if (!raw) { setMatches([]); return; }
+      if (!raw) { setLiked([]); return; }
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) { setMatches([]); return; }
-      const byName = new Map(baseList.map((h) => [h.name, h] as const));
-      const restored = parsed
-        .map((h: any) => (h && typeof h.name === "string" ? byName.get(h.name) || null : null))
-        .filter(Boolean) as Horse[];
+      if (!Array.isArray(parsed)) { setLiked([]); return; }
+      // Back-compat: entries may be objects {name} or strings (rare) or richer objects with snap
+      const entries: MatchEntry[] = parsed
+        .map((x: any) => {
+          if (!x) return null;
+          if (typeof x === "string") return { name: x } as MatchEntry;
+          if (typeof x.name === "string") return { name: x.name, snap: x.snap || undefined } as MatchEntry;
+          return null;
+        })
+        .filter(Boolean) as MatchEntry[];
       const seen = new Set<string>();
-      const deduped = restored.filter((h) => (seen.has(h.name) ? false : (seen.add(h.name), true)));
-      setMatches(deduped);
-    } catch { setMatches([]); }
-  }, [baseList]);
+      const deduped = entries.filter((e) => (seen.has(e.name) ? false : (seen.add(e.name), true)));
+      setLiked(deduped);
+    } catch { setLiked([]); }
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -56,37 +66,148 @@ export function useTfhMatches(baseList: Horse[]) {
     };
   }, [load]);
 
-  const persist = useCallback((list: Horse[]) => {
+  const persist = useCallback((entries: MatchEntry[]) => {
     try {
-      if (list.length) {
-        localStorage.setItem(TFH_STORAGE.MATCHES, JSON.stringify(list.map((h) => ({ name: h.name }))));
+      if (entries.length) {
+        localStorage.setItem(TFH_STORAGE.MATCHES, JSON.stringify(entries));
       } else {
         localStorage.removeItem(TFH_STORAGE.MATCHES);
       }
-      // Defer event to avoid setState during render warnings across siblings
       setTimeout(() => dispatch(TFH_EVENTS.MATCHES), 0);
     } catch {}
   }, []);
 
   const addMatch = useCallback((h: Horse) => {
-    setMatches((prev) => {
-      if (prev.find((x) => x.name === h.name)) return prev;
-      const next = [...prev, h];
+    setLiked((prev) => {
+      if (prev.find((e) => e.name === h.name)) return prev;
+      const snap: Partial<Horse> = {
+        image: h.image,
+        age: h.age,
+        gender: h.gender,
+        heightCm: h.heightCm,
+        breed: h.breed,
+        location: h.location,
+        description: h.description,
+        color: (h as any).color,
+        temperament: (h as any).temperament,
+        interests: Array.isArray(h.interests) ? h.interests : undefined,
+        disciplines: Array.isArray(h.disciplines) ? h.disciplines : undefined,
+        photos: Array.isArray(h.photos) ? h.photos : undefined,
+      };
+      const next = [...prev, { name: h.name, snap }];
       persist(next);
       return next;
     });
   }, [persist]);
 
-  const clearMatches = useCallback(() => { setMatches([]); persist([]); }, [persist]);
+  const clearMatches = useCallback(() => { setLiked([]); persist([]); }, [persist]);
   const removeMatch = useCallback((name: string) => {
-    setMatches((prev) => {
-      const next = prev.filter((h) => h.name !== name);
+    setLiked((prev) => {
+      const next = prev.filter((e) => e.name !== name);
       persist(next);
       return next;
     });
   }, [persist]);
 
-  return { matches, setMatches, addMatch, removeMatch, clearMatches } as const;
+  // DERIVED: actual matches using central chance logic
+  const matches = useMemo(() => {
+    const res: Horse[] = [];
+    for (const entry of liked) {
+      const n = entry.name;
+      if (!shouldMatchFor(n)) continue;
+      const h = byName.get(n);
+      if (h) { res.push(h); continue; }
+      // Build from snapshot if available
+      const s = entry.snap || {};
+      res.push({
+        name: n,
+        age: typeof s.age === "number" ? s.age : 0,
+        breed: (s as any).breed || "",
+        location: (s as any).location || "",
+        gender: (s as any).gender || "Gelding",
+        heightCm: typeof (s as any).heightCm === "number" ? (s as any).heightCm : 0,
+        color: (s as any).color || "",
+        temperament: (s as any).temperament || "",
+        disciplines: Array.isArray((s as any).disciplines) ? (s as any).disciplines as string[] : [],
+        description: (s as any).description || "",
+        interests: Array.isArray((s as any).interests) ? (s as any).interests as string[] : [],
+        image: (s as any).image || "/TFH/Tinder-for-Horses-cover-image.png",
+        photos: Array.isArray((s as any).photos) ? (s as any).photos as string[] : undefined,
+      });
+    }
+    return res;
+  }, [liked, byName]);
+
+  // Enrich existing entries with missing snapshot details (interests/discipline/etc.)
+  useEffect(() => {
+    let changed = false;
+    const next: MatchEntry[] = liked.map((e) => {
+      const s = e.snap || {};
+      const missingInterests = !Array.isArray((s as any).interests);
+      const missingDisciplines = !Array.isArray((s as any).disciplines);
+      const missingColor = !(s as any).color;
+      const missingTemperament = !(s as any).temperament;
+      const missingImage = !(s as any).image;
+      const missingDesc = !(s as any).description;
+      if (missingInterests || missingDisciplines || missingColor || missingTemperament || missingImage || missingDesc) {
+        const h = byName.get(e.name);
+        if (h) {
+          const snap: Partial<Horse> = {
+            ...s,
+            image: (s as any).image || h.image,
+            description: (s as any).description || h.description,
+            color: (s as any).color || (h as any).color,
+            temperament: (s as any).temperament || (h as any).temperament,
+            interests: Array.isArray((s as any).interests) ? (s as any).interests : (Array.isArray(h.interests) ? h.interests : undefined),
+            disciplines: Array.isArray((s as any).disciplines) ? (s as any).disciplines : (Array.isArray(h.disciplines) ? h.disciplines : undefined),
+          };
+          changed = true;
+          return { name: e.name, snap };
+        }
+      }
+      return e;
+    });
+    if (changed) { setLiked(next); persist(next); }
+  }, [liked, byName, persist]);
+
+  return { matches, addMatch, removeMatch, clearMatches } as const;
+}
+
+// Deterministic match chance based on user seed and horse name
+function xmur3(str: string) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+function mulberry32(a: number) {
+  return () => {
+    let t = (a += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function shouldMatchFor(name: string, threshold = 0.6): boolean {
+  let seed = "default";
+  try {
+    let s = localStorage.getItem(TFH_STORAGE.SEED);
+    if (!s) {
+      s = Math.random().toString(36).slice(2);
+      localStorage.setItem(TFH_STORAGE.SEED, s);
+    }
+    seed = s || seed;
+  } catch {}
+  const sfn = xmur3(`${seed}|${name}`);
+  const rnd = mulberry32(sfn());
+  return rnd() > threshold;
 }
 
 export type GenderFilter = "All" | "Mare" | "Stallion" | "Gelding";

@@ -54,7 +54,7 @@ export default function CollapsibleSidebar({
           "relative hidden md:block shrink-0 border-r border-neutral-800 bg-neutral-900/80 text-neutral-100 backdrop-blur",
           "h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden",
           "transition-[width] duration-200 ease-in-out",
-          collapsed ? "md:w-12" : "md:w-64",
+          collapsed ? "md:w-12" : "md:w-80",
           className,
         ].join(" ")}
       >
@@ -82,7 +82,7 @@ export default function CollapsibleSidebar({
             )}
           </div>
 
-          <nav className="flex-1 overflow-hidden px-3 py-3 pb-24 md:pb-32">
+          <nav className="flex-1 overflow-hidden px-4 py-4 pb-24 md:pb-32">
             {description && (
               <div className={`mb-3 ${collapsed ? "hidden" : "block"}`}>
                 {typeof description === "string" ? (
