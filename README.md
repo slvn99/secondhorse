@@ -84,8 +84,24 @@ Place secrets in `.env.local` and never commit them. Provide non‑secret exampl
 **Testing**
 - Run all tests: `npm test`
 - Watch mode: `npm run test:watch`
-- Coverage: `npm run coverage` (HTML report in `coverage/`)
-- Target: Keep ≥80% coverage for changed code. Example test: `tests/lib/horses.test.ts` validates seed data shape.
+- Coverage (opt‑in): `npm run coverage` (HTML report in `coverage/`). Coverage is enabled when `COVERAGE=1` is set.
+- Target: Keep ≥80% coverage for changed code. Example: `tests/lib/horses.test.ts` validates seed data shape.
+
+**Testing Approach & Patterns**
+- Environment: Vitest with `jsdom` (see `vitest.config.ts`) and project aliases (`@` → `src`).
+- Global setup: `tests/setup.ts`
+  - Mocks `next/image` to a plain `img` for DOM tests.
+  - Provides a minimal `renderElement()` helper using `react-dom/client` for simple mounting.
+  - Seeds a deterministic RNG for TFH matching via `localStorage`.
+- Module mocking:
+  - Audio: Mock `tone` and verify `ensureAudioOnce()` idempotency (see `tests/lib/audioGate.test.ts`).
+  - Child processes: `src/lib/git.ts` exposes `__setExecSyncForTests` to inject a fake `execSync` in tests (avoids brittle ESM spies on built‑ins). See `tests/lib/git.test.ts`.
+- Coverage ergonomics: Coverage is disabled by default for speed and enabled only in `npm run coverage` via `COVERAGE=1`.
+- React act warnings: Some component tests log act(...) warnings. Where needed, wrap interactions in `act(async () => ...)` or use async utilities (e.g., `waitFor`). These warnings are non‑fatal but should be addressed when expanding the test suite.
+
+**Housekeeping**
+- Cleanup build caches: `npm run clean` removes `.next`, `.turbo`, `coverage/`, and TS build info (`*.tsbuildinfo`).
+- Deep reset: `npm run reset` clears caches, reinstalls deps, and rebuilds.
 
 **Deployment**
 - Designed for Vercel (Next.js 15). Ensure required env vars are set on the project.
@@ -98,6 +114,22 @@ Place secrets in `.env.local` and never commit them. Provide non‑secret exampl
 - **Stale build cache**: Error like `Cannot find module './586.js'` → `npm run clean` then `npm run dev`. If it persists: `npm run reset`.
 - **Node version**: Use Node `>= 18.18` or `>= 20`.
 - **Asset paths**: If images 404, verify `public/TFH` exists and Next rewrites are active.
+
+**Suggested Improvements**
+- Testing
+  - Increase coverage of `src/lib/tfh.ts` by extracting pure helpers (e.g., RNG seeding, filter persistence, index persistence) and writing unit tests for them. Consider `@testing-library/react` and `act()`/`waitFor` to remove warnings.
+  - Add a basic E2E smoke test (Playwright) for the swipe flow and Matches.
+- Type safety
+  - Tighten types in server actions and files currently excluded from strictness; add runtime env validation (e.g., `zod`) for critical vars.
+- CI & automation
+  - Add a GitHub Actions workflow: lint, type‑check, tests, and coverage upload (HTML as artifact).
+  - Add pre‑commit hooks with `lint-staged` (format/lint staged files).
+- DX
+  - Provide `.env.example` with non‑secret placeholders and document required vars in README.
+  - Split `src/lib/tfh.ts` into smaller modules (matches, filters, index) to improve readability and testability.
+- Performance & UX
+  - Audit client bundles for large deps; consider dynamic imports for heavier UI parts.
+  - Ensure all interactive elements have accessible names/ARIA and keyboard support; add unit tests for focus/keyboard flows.
 
 **Moderation**
 - Profiles are reviewed by a human via: `https://samvannoord.nl/moderation`.

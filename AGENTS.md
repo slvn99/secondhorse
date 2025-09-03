@@ -33,9 +33,19 @@ Testing Guidelines
 - Framework: Vitest.
 - Layout: tests/ mirrors src/ or colocate.
 - Naming: `*.test.ts(x)` for unit, `*.spec.ts(x)` for integration.
-- Commands: `npm test` (CI), `npm run test:watch` (local), `npm run coverage` (report).
+- Commands: `npm test` (CI), `npm run test:watch` (local), `npm run coverage` (report; sets `COVERAGE=1`).
 - Example: see `tests/lib/horses.test.ts` (validates TFH seed data).
 - Aim for ≥80% coverage on changed code.
+
+Testing Approach
+----------------
+- Environment: `jsdom` with alias `@` → `src` (see `vitest.config.ts`).
+- Setup: `tests/setup.ts` mocks `next/image`, provides a simple `renderElement()` helper, and seeds deterministic RNG for TFH via `localStorage`.
+- Coverage: Disabled by default; enabled when `COVERAGE=1` (used by `npm run coverage`).
+- Mocking patterns:
+  - Audio (`tone`): mock module to test `ensureAudioOnce()` idempotency without a real audio context.
+  - Child processes: avoid ESM spy limitations by adding a narrow test hook. `src/lib/git.ts` exposes `__setExecSyncForTests` to inject a fake `execSync` in tests.
+- React act warnings in component tests are non‑fatal. Prefer wrapping stateful interactions in `act` or `waitFor` to silence them when expanding tests.
 
 Commit & Pull Request Guidelines
 --------------------------------
@@ -51,6 +61,12 @@ Security & Configuration Tips
 Troubleshooting
 ---------------
 - Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node ≥ 18.18 or 20.x.
+
+Agent Notes
+-----------
+- When increasing coverage, start with `src/lib` pure utilities. Add targeted tests in `tests/lib/` and avoid brittle UI tests unless necessary.
+- If a module depends on non‑deterministic or external APIs (e.g., `child_process`, `window`), introduce a minimal indirection or test hook rather than broad refactors.
+- Keep changes minimal and aligned with the repo’s style. Update docs when adding new patterns (e.g., test hooks).
 
 Moderation
 ----------
