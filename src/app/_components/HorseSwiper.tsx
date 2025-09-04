@@ -226,10 +226,10 @@ export default function HorseSwiper({
           <>
             <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
                 <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i > 0 ? i - 1 : gallery.length - 1)); }} onPointerDown={(e) => e.stopPropagation()}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M15.78 4.22a.75.75 0 0 1 0 1.06L9.06 12l6.72 6.72a.75.75 0 1 1-1.06 1.06l-7.25-7.25a.75.75 0 0 1 0-1.06l7.25-7.25a.75.75 0 0 1 1.06 0z" clipRule="evenodd" /></svg>
+                <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M15.78 4.22a.75.75 0 0 1 0 1.06L9.06 12l6.72 6.72a.75.75 0 1 1-1.06 1.06l-7.25-7.25a.75.75 0 0 1 0-1.06l7.25-7.25a.75.75 0 0 1 1.06 0z" clipRule="evenodd" /></svg>
               </button>
                 <button type="button" className="pointer-events-auto inline-flex items-center justify-center rounded-full bg-black/45 text-white border border-white/20 hover:bg-black/65 h-12 w-12 sm:h-14 sm:w-14" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); setPhotoIdx((i) => (i + 1) % gallery.length); }} onPointerDown={(e) => e.stopPropagation()}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M8.22 19.78a.75.75 0 0 1 0-1.06L14.94 12 8.22 5.28a.75.75 0 1 1 1.06-1.06l7.25 7.25a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0z" clipRule="evenodd" /></svg>
+                <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 sm:h-7 sm:w-7"><path fillRule="evenodd" d="M8.22 19.78a.75.75 0 0 1 0-1.06L14.94 12 8.22 5.28a.75.75 0 1 1 1.06-1.06l7.25 7.25a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0z" clipRule="evenodd" /></svg>
               </button>
             </div>
             <div className="absolute bottom-2 inset-x-0 z-20 flex items-center justify-center gap-1 pointer-events-none">
@@ -248,7 +248,7 @@ export default function HorseSwiper({
               onClick={(e) => { e.stopPropagation(); onShare?.(); }}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
               </svg>
@@ -263,13 +263,13 @@ export default function HorseSwiper({
               onClick={(e) => { e.stopPropagation(); onUndo?.(); }}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0 6-6M3 9h12a6 6 0 110 12h-3" />
               </svg>
             </button>
           )}
           <button type="button" aria-label="Enlarge photo" title="Enlarge photo" className="rounded-full bg-black/50 text-white p-2 border border-white/20 hover:bg-black/70" onClick={(e) => { e.stopPropagation(); setShowPhoto(true); }} onPointerDown={(e) => e.stopPropagation()}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M3.75 3A.75.75 0 0 0 3 3.75v4.5a.75.75 0 0 0 1.5 0V5.56l4.72 4.72a.75.75 0 1 0 1.06-1.06L5.56 4.5h2.69a.75.75 0 0 0 0-1.5h-4.5ZM20.25 21a.75.75 0 0 0 .75-.75v-4.5a.75.75 0 0 0-1.5 0v2.69l-4.72-4.72a.75.75 0 1 0-1.06 1.06l4.72 4.72h-2.69a.75.75 0 0 0 0 1.5h4.5Z"/><path d="M3.75 21h4.5a.75.75 0 0 0 0-1.5H5.56l4.72-4.72a.75.75 0 0 0-1.06-1.06L4.5 18.44v-2.69a.75.75 0 0 0-1.5 0v4.5c0 .414.336.75.75.75ZM20.25 3h-4.5a.75.75 0 0 0 0 1.5h2.69l-4.72 4.72a.75.75 0 0 0 1.06 1.06L19.5 5.56v2.69a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 0 20.25 3Z"/></svg>
+            <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M3.75 3A.75.75 0 0 0 3 3.75v4.5a.75.75 0 0 0 1.5 0V5.56l4.72 4.72a.75.75 0 1 0 1.06-1.06L5.56 4.5h2.69a.75.75 0 0 0 0-1.5h-4.5ZM20.25 21a.75.75 0 0 0 .75-.75v-4.5a.75.75 0 0 0-1.5 0v2.69l-4.72-4.72a.75.75 0 1 0-1.06 1.06l4.72 4.72h-2.69a.75.75 0 0 0 0 1.5h4.5Z"/><path d="M3.75 21h4.5a.75.75 0 0 0 0-1.5H5.56l4.72-4.72a.75.75 0 0 0-1.06-1.06L4.5 18.44v-2.69a.75.75 0 0 0-1.5 0v4.5c0 .414.336.75.75.75ZM20.25 3h-4.5a.75.75 0 0 0 0 1.5h2.69l-4.72 4.72a.75.75 0 0 0 1.06 1.06L19.5 5.56v2.69a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 0 20.25 3Z"/></svg>
           </button>
         </div>
         <div className={clsx(
@@ -313,7 +313,7 @@ export default function HorseSwiper({
             title={detailsOpen ? "Tap to collapse" : "Tap to expand"}
           >
             <span>{detailsOpen ? "Tap to collapse" : "Tap to expand"}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={clsx("h-3.5 w-3.5 transition-transform duration-500", detailsOpen ? "rotate-180 opacity-70" : "rotate-0 opacity-60")}> 
+            <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={clsx("h-3.5 w-3.5 transition-transform duration-500", detailsOpen ? "rotate-180 opacity-70" : "rotate-0 opacity-60")}> 
               <path fillRule="evenodd" d="M12 14.5a.75.75 0 0 1-.53-.22l-5-5a.75.75 0 1 1 1.06-1.06L12 12.69l4.47-4.47a.75.75 0 1 1 1.06 1.06l-5 5a.75.75 0 0 1-.53.22z" clipRule="evenodd" />
             </svg>
           </button>
@@ -351,11 +351,11 @@ export default function HorseSwiper({
       {showActions && (
         <div className="grid grid-cols-2 gap-4 mt-2 mb-6">
           <button onClick={() => handleChoice(false)} className="rounded-full bg-red-600/90 hover:bg-red-600 text-white px-4 py-2 flex items-center justify-center gap-2" aria-label="Dislike" title="Dislike">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M6.225 4.811a.75.75 0 0 1 1.06 0L12 9.525l4.715-4.714a.75.75 0 1 1 1.06 1.06L13.06 10.586l4.715 4.714a.75.75 0 1 1-1.06 1.06L12 11.646l-4.715 4.714a.75.75 0 1 1-1.06-1.06l4.714-4.714-4.714-4.715a.75.75 0 0 1 0-1.06Z"/></svg>
+            <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M6.225 4.811a.75.75 0 0 1 1.06 0L12 9.525l4.715-4.714a.75.75 0 1 1 1.06 1.06L13.06 10.586l4.715 4.714a.75.75 0 1 1-1.06 1.06L12 11.646l-4.715 4.714a.75.75 0 1 1-1.06-1.06l4.714-4.714-4.714-4.715a.75.75 0 0 1 0-1.06Z"/></svg>
             <span className="sr-only">Nope</span>
           </button>
           <button onClick={() => handleChoice(true)} className="rounded-full bg-green-600/90 hover:bg-green-600 text-white px-4 py-2 flex items-center justify-center gap-2" aria-label="Like" title="Like">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M11.645 20.91a.75.75 0 0 0 .71 0c1.2-.659 2.33-1.44 3.39-2.31 2.37-1.94 4.26-4.15 5.21-6.5.95-2.36.79-5.12-1.06-6.97-1.47-1.47-3.9-1.95-5.91-.21-.4.35-.76.77-1.08 1.25-.32-.48-.68-.9-1.08-1.25-2.01-1.74-4.44-1.26-5.91.21-1.85 1.85-2.01 4.61-1.06 6.97.95 2.35 2.84 4.56 5.21 6.5 1.06.87 2.2 1.65 3.39 2.31Z"/></svg>
+            <svg suppressHydrationWarning xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M11.645 20.91a.75.75 0 0 0 .71 0c1.2-.659 2.33-1.44 3.39-2.31 2.37-1.94 4.26-4.15 5.21-6.5.95-2.36.79-5.12-1.06-6.97-1.47-1.47-3.9-1.95-5.91-.21-.4.35-.76.77-1.08 1.25-.32-.48-.68-.9-1.08-1.25-2.01-1.74-4.44-1.26-5.91.21-1.85 1.85-2.01 4.61-1.06 6.97.95 2.35 2.84 4.56 5.21 6.5 1.06.87 2.2 1.65 3.39 2.31Z"/></svg>
             <span className="sr-only">Like</span>
           </button>
         </div>

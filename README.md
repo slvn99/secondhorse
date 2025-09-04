@@ -66,7 +66,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
 - `VERCEL_GIT_COMMIT_SHA`/`GITHUB_SHA`/`COMMIT_SHA` (optional): Used for version label in the UI.
 
-Place secrets in `.env.local` and never commit them. A sanitized `.env.example` is included for local setup.
+Place secrets in `.env.local` and never commit them. A sanitized `.env.example` is included for local setup. Note for contributors: do not delete or modify someone else’s local `.env.local`. If you need to change env usage, update docs and `.env.example` instead.
 
 Security note: a previously committed `.env.local` has been removed from the repo. You should rotate/revoke any exposed credentials in that file and, if needed, purge it from git history (e.g., with `git filter-repo`).
 

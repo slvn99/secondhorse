@@ -6,7 +6,7 @@ import { headers, cookies } from "next/headers";
 import Script from "next/script";
 import { saveImageAndGetUrl } from "../_lib/uploads";
 import { rateLimit } from "../_lib/rateLimit";
-import { z } from "zod";
+import { normalizeAndParse } from "./validation";
 import NewFormClient from "./NewFormClient";
 
 export const metadata: Metadata = {
@@ -120,20 +120,6 @@ async function create(formData: FormData) {
   } catch {}
 
   // Validate and coerce input with zod
-  const schema = z.object({
-    display_name: z.string().min(1).max(120),
-    bio: z.string().max(1000).optional().default(""),
-    age_years: z.coerce.number().int().min(0).max(40).optional().nullable(),
-    breed: z.string().max(120).optional().nullable(),
-    gender: z.enum(["mare", "stallion", "gelding", "unknown"]).optional().nullable(),
-    height_cm: z.coerce.number().int().min(50).max(230).optional().nullable(),
-    location_city: z.string().max(120).optional().nullable(),
-    location_country: z.string().max(120).optional().nullable(),
-    color: z.string().max(64).optional().nullable(),
-    temperament: z.string().max(64).optional().nullable(),
-    disciplines: z.string().optional().nullable(),
-    interests: z.string().optional().nullable(),
-  });
   const raw = {
     display_name: sanitizeText(getField(formData, "display_name"), 120),
     bio: sanitizeText(getField(formData, "bio"), 1000),
@@ -148,9 +134,9 @@ async function create(formData: FormData) {
     disciplines: sanitizeText(getField(formData, "disciplines"), 500) || "",
     interests: sanitizeText(getField(formData, "interests"), 500) || "",
   } as any;
-  let parsed: z.infer<typeof schema>;
+  let parsed: ReturnType<typeof normalizeAndParse>;
   try {
-    parsed = schema.parse(raw);
+    parsed = normalizeAndParse(raw);
   } catch {
     await setNotice("error", "Please check your input and try again.", 20);
     redirect("/new");
@@ -353,7 +339,7 @@ export default async function NewProfilePage() {
             <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
             <button type="submit" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
               <span className="inline-flex items-center gap-2">
-                <svg className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
+                <svg suppressHydrationWarning className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
                 <span data-label>Save</span>
               </span>
             </button>

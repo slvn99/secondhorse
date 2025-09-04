@@ -67,6 +67,7 @@ Agent Notes
 - When increasing coverage, start with `src/lib` pure utilities. Add targeted tests in `tests/lib/` and avoid brittle UI tests unless necessary.
 - If a module depends on non‑deterministic or external APIs (e.g., `child_process`, `window`), introduce a minimal indirection or test hook rather than broad refactors.
 - Keep changes minimal and aligned with the repo’s style. Update docs when adding new patterns (e.g., test hooks).
+- Do not delete or modify `.env.local`. Treat it as user‑managed. If secrets exposure is a concern, update `.env.example` and docs; never remove the developer’s local `.env.local`.
 
 Moderation
 ----------
