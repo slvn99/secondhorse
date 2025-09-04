@@ -8,6 +8,38 @@ export default function NewFormClient() {
     const btn = document.getElementById("tfh-save-btn") as HTMLButtonElement | null;
     if (!form || !btn) return;
     const draftKey = "tfh_new_draft";
+    const stepKey = "tfh_new_step";
+    const step1 = document.getElementById("tfh-step-1");
+    const step2 = document.getElementById("tfh-step-2");
+    const nextBtn = document.getElementById("tfh-next-step");
+    const prevBtn = document.getElementById("tfh-prev-step");
+    const indicator = document.getElementById("tfh-step-indicator");
+
+    const goStep = (n: 1 | 2) => {
+      if (step1 && step2) {
+        if (n === 1) { step1.classList.remove("hidden"); step2.classList.add("hidden"); }
+        else { step1.classList.add("hidden"); step2.classList.remove("hidden"); }
+        try { form.setAttribute("aria-busy", "false"); } catch {}
+      }
+      if (indicator) indicator.textContent = `Step ${n} of 2`;
+    };
+
+    const onNext = () => {
+      const errBox = document.getElementById("tfh-form-error");
+      const name = (form.querySelector('input[name="display_name"]') as HTMLInputElement | null)?.value?.trim() || "";
+      if (!name) {
+        if (errBox) { errBox.textContent = "Please enter a display name to continue."; errBox.classList.remove("hidden"); errBox.setAttribute('tabindex','-1'); (errBox as any).focus?.(); }
+        (form.querySelector('input[name="display_name"]') as HTMLInputElement | null)?.focus?.();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (errBox) errBox.classList.add("hidden");
+      try { localStorage.setItem(stepKey, "2"); } catch {}
+      goStep(2);
+    };
+    nextBtn?.addEventListener("click", onNext);
+    prevBtn?.addEventListener("click", () => { try { localStorage.setItem(stepKey, "1"); } catch {} goStep(1); });
+
     const onSubmit = (ev: Event) => {
       // Require hCaptcha completion if widget is present
       const tokenEl = document.querySelector<HTMLTextAreaElement>('textarea[name="h-captcha-response"]');
@@ -16,10 +48,7 @@ export default function NewFormClient() {
       const token = tokenEl?.value?.trim();
       if (hasWidget && !token) {
         ev.preventDefault();
-        if (errBox) {
-          errBox.textContent = "Please complete the captcha before submitting.";
-          errBox.classList.remove("hidden");
-        }
+        if (errBox) { errBox.textContent = "Please complete the captcha before submitting."; errBox.classList.remove("hidden"); errBox.setAttribute('tabindex','-1'); (errBox as any).focus?.(); }
         try { (window as any).hcaptcha?.execute?.(); } catch {}
         return;
       }
@@ -30,8 +59,15 @@ export default function NewFormClient() {
       if (label) label.textContent = "Saving...";
       btn.disabled = true;
       btn.setAttribute("aria-busy", "true");
+      try { form.setAttribute("aria-busy", "true"); } catch {}
     };
     form.addEventListener("submit", onSubmit);
+    form.addEventListener('keydown', (e: any) => {
+      if (e.key !== 'Enter') return;
+      if ((e.target as HTMLElement)?.tagName === 'TEXTAREA') return;
+      if (step1 && !step1.classList.contains('hidden')) { e.preventDefault(); onNext(); }
+    });
+    try { form.setAttribute("aria-busy", "false"); } catch {}
     // Live photo previews + validation for up to 5 slots
     const revokers: Array<() => void> = [];
     const applyPreviewFor = (i: number) => {
@@ -57,7 +93,7 @@ export default function NewFormClient() {
         else { errBox.textContent = ""; errBox.classList.add("hidden"); }
       };
       const validateFile = async (file: File) => {
-        const maxBytes = 8 * 1024 * 1024; // 8MB
+        const maxBytes = 5 * 1024 * 1024; // 5MB
         if (!file.type.startsWith("image/")) { setError("File must be an image."); return false; }
         if (file.size > maxBytes) { setError("Image must be ≤ 8MB."); return false; }
         try {
@@ -65,12 +101,12 @@ export default function NewFormClient() {
           currentObjectUrl = url;
           await new Promise<void>((resolve, reject) => {
             const pic = new Image();
-            pic.onload = () => { (pic.width >= 300 && pic.height >= 300) ? resolve() : reject(new Error("too small")); };
+            pic.onload = () => { (pic.width >= 600 && pic.height >= 600) ? resolve() : reject(new Error("too small")); };
             pic.onerror = () => reject(new Error("bad image"));
             pic.src = url;
           });
         } catch {
-          setError("Image seems invalid or too small (min 300×300).");
+          setError("Image seems invalid or too small ( min 600×600).");
           return false;
         }
         setError(null);
@@ -177,7 +213,7 @@ export default function NewFormClient() {
       update();
       revokers.push(() => { urlInput.removeEventListener("input", update); fileInput.removeEventListener("change", update); revoke(); });
     };
-    for (let i = 0; i < 5; i++) applyPreviewFor(i);
+    for (let i = 0; i < 4; i++) applyPreviewFor(i);
 
     // Draft: autosave/restore
     const draftBanner = document.getElementById("tfh-draft-banner");
@@ -199,11 +235,27 @@ export default function NewFormClient() {
       }
       return true;
     };
-    // Show restore banner if we have a draft and current form is empty
+    // Auto-restore if we have a draft (so refresh retains data)
     try {
       const saved = localStorage.getItem(draftKey);
-      if (saved && emptyForm()) draftBanner?.classList.remove("hidden");
-    } catch {}
+      if (saved) {
+        const data = JSON.parse(saved) as Record<string, string>;
+        form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input[name], textarea[name], select[name]").forEach((el) => {
+          if (el instanceof HTMLInputElement && el.type === "file") return;
+          if (data[el.name] !== undefined) el.value = data[el.name];
+        });
+      }
+      // Decide initial step: if there's an error notice, keep saved step; otherwise reset to step 1
+      const flags = document.getElementById('tfh-flags');
+      const notice = flags?.getAttribute('data-notice') || '';
+      if (notice) {
+        const st = localStorage.getItem(stepKey);
+        if (st === '2') goStep(2); else goStep(1);
+      } else {
+        try { localStorage.setItem(stepKey, '1'); } catch {}
+        goStep(1);
+      }
+    } catch { goStep(1); }
 
     const restore = () => {
       try {

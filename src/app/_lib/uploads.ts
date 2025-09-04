@@ -2,6 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
+import imageSize from "image-size";
+import sharp from "sharp";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
@@ -30,6 +32,25 @@ export async function saveImageAndGetUrl(file: File): Promise<string> {
 
   const buf = Buffer.from(await file.arrayBuffer());
   const extFromMagic = sniffExt(buf);
+  // Dimension/quality checks
+  try {
+    const dim = imageSize(buf as any);
+    const w = dim.width || 0;
+    const h = dim.height || 0;
+    if (w < 600 || h < 600) throw new Error("too small");
+  } catch {
+    throw new Error("Image must be at least 600x600");
+  }
+  // Strip metadata (EXIF) by re-encoding via sharp; ignore failure gracefully
+  let cleanBuf: any = buf as any;
+  try {
+    const fmt = extFromMagic?.slice(1) || 'jpeg';
+    const img = sharp(buf as any, { failOn: 'none' } as any);
+    if (fmt === 'png') cleanBuf = await (img.png({ compressionLevel: 9 }).toBuffer() as any);
+    else if (fmt === 'webp') cleanBuf = await (img.webp({ quality: 90 }).toBuffer() as any);
+    else if (fmt === 'gif') cleanBuf = await (img.gif().toBuffer() as any);
+    else cleanBuf = await (img.jpeg({ quality: 90 }).toBuffer() as any);
+  } catch {}
   const ext = extFromMagic || (type === "image/jpeg" ? ".jpg" : type === "image/png" ? ".png" : type === "image/webp" ? ".webp" : type === "image/gif" ? ".gif" : ".bin");
   const stamped = `${Date.now()}_${randomUUID()}${ext}`;
 
@@ -37,7 +58,7 @@ export async function saveImageAndGetUrl(file: File): Promise<string> {
   if (token) {
     const key = `tfh/${stamped}`;
     const contentType = type || "application/octet-stream";
-    const { url } = await put(key, buf, { access: "public", token, contentType });
+    const { url } = await put(key, cleanBuf, { access: "public", token, contentType });
     return url;
   }
 
@@ -45,7 +66,7 @@ export async function saveImageAndGetUrl(file: File): Promise<string> {
     const dir = path.join(process.cwd(), "public", "uploads");
     await fs.mkdir(dir, { recursive: true });
     const dest = path.join(dir, stamped);
-    await fs.writeFile(dest, buf);
+    await fs.writeFile(dest, cleanBuf);
     return `/uploads/${stamped}`;
   }
 

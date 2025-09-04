@@ -159,7 +159,7 @@ async function create(formData: FormData) {
   let attemptedFileUpload = false;
   let fileUploadFailed = false;
   const primaryIndex = Number(getField(formData, "primary_photo") || "");
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const posRaw = Number(getField(formData, `photo_${i}_pos`) || "");
     const position = Number.isFinite(posRaw) && posRaw > 0 ? Math.floor(posRaw) : i + 1;
     let chosenUrl = "";
@@ -177,9 +177,18 @@ async function create(formData: FormData) {
     }
     if (chosenUrl) { photos.push({ url: chosenUrl, position, is_primary: primaryIndex === i }); }
   }
-  if (photos.length && !photos.some((p) => p.is_primary)) { photos[0].is_primary = true; }
+  // Deduplicate and normalize photos
+  if (photos.length) {
+    const seen = new Set<string>();
+    const dedup = photos.filter((p) => (p.url && !seen.has(p.url) ? (seen.add(p.url), true) : false));
+    dedup.sort((a,b)=>a.position-b.position);
+    dedup.forEach((p,i)=>{ p.position = i+1; });
+    if (!dedup.some((p)=>p.is_primary)) dedup[0].is_primary = true;
+    photos.length = 0; photos.push(...dedup);
+  }
 
   try {
+
     let id: string;
     try {
       const rows = await sql`
@@ -254,11 +263,18 @@ export default async function NewProfilePage() {
         <NewFormClient />
         <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-neutral-950/85 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/60 border-b border-neutral-800/60">
           <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-semibold">Add Horse Profile</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-semibold">Add Horse Profile</h1>
+              <span id="tfh-step-indicator" aria-live="polite" className="inline-flex items-center gap-2 text-[11px] font-medium px-2 py-0.5 rounded bg-neutral-800/70 border border-neutral-700 text-neutral-200">
+                Step 1 of 2
+              </span>
+            </div>
             <div className="flex items-center gap-3" />
           </div>
         </div>
 
+        {/* Flags for client helpers (e.g., error restore) */}
+        <div id="tfh-flags" data-notice={notice?.type || ""} className="hidden" />
         <form id="tfh-new-form" action={create} className="space-y-6 mt-6">
           {notice && notice.type === "error" && (<div className="rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm">{notice.message}</div>)}
           <div id="tfh-form-error" className="hidden rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm"></div>
@@ -274,14 +290,17 @@ export default async function NewProfilePage() {
             All profiles are reviewed by a human before publishing. Submissions may take up to 24 hours.
           </div>
 
+          {/* Step indicator moved to header */}
+
+          <div id="tfh-step-1" className="space-y-6">
           <div className="rounded-2xl border border-yellow-700/50 bg-yellow-900/10 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Basic Info</h2>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-sm text-neutral-300">Display name <span className="text-yellow-400">*</span><input name="display_name" required maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
+              <label className="text-sm text-neutral-300">Display name <span className="text-yellow-400">*</span><input aria-describedby="hint-name" name="display_name" required maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-name" className="mt-1 text-xs text-neutral-400">Public name shown on the profile.</p></label>
               <label className="text-sm text-neutral-300">Breed<input name="breed" maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
               <label className="text-sm text-neutral-300">Gender<select name="gender" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"><option value="mare">Mare</option><option value="stallion">Stallion</option><option value="gelding">Gelding</option><option value="unknown">Prefer not to say</option></select></label>
-              <label className="text-sm text-neutral-300">Age (years)<input type="number" name="age_years" min={0} max={40} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
-              <label className="text-sm text-neutral-300">Height (cm)<input type="number" name="height_cm" min={50} max={230} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
+              <label className="text-sm text-neutral-300">Age (years)<input aria-describedby="hint-age" type="number" name="age_years" min={0} max={40} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-age" className="mt-1 text-xs text-neutral-400">Optional. 0–40.</p></label>
+              <label className="text-sm text-neutral-300">Height (cm)<input aria-describedby="hint-height" type="number" name="height_cm" min={50} max={230} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-height" className="mt-1 text-xs text-neutral-400">Optional. 50–230 cm at withers.</p></label>
               <label className="text-sm text-neutral-300">Color<input name="color" maxLength={64} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
             </div>
             <label className="block mt-3 text-sm text-neutral-300">Bio<textarea name="bio" rows={4} maxLength={1000} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
@@ -298,16 +317,24 @@ export default async function NewProfilePage() {
           <div className="rounded-2xl border border-pink-700/40 bg-pink-900/10 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Interests & Disciplines</h2>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-sm text-neutral-300">Interests (comma-separated)<input name="interests" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
-              <label className="text-sm text-neutral-300">Disciplines (comma-separated)<input name="disciplines" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
+              <label className="text-sm text-neutral-300">Interests (comma-separated)<input aria-describedby="hint-interests" name="interests" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-interests" className="mt-1 text-xs text-neutral-400">e.g., trail rides, grooming, carrots</p></label>
+              <label className="text-sm text-neutral-300">Disciplines (comma-separated)<input aria-describedby="hint-disciplines" name="disciplines" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-disciplines" className="mt-1 text-xs text-neutral-400">e.g., dressage, jumping, trail</p></label>
             </div>
           </div>
 
+          <div className="flex items-center justify-between gap-2">
+            <a href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</a>
+            <button type="button" id="tfh-next-step" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Add photos</button>
+          </div>
+
+          </div>
+
+          <div id="tfh-step-2" className="space-y-6 hidden">
           <div className="rounded-2xl border border-neutral-700/40 bg-neutral-900/20 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Photos</h2>
-            <p className="text-xs text-neutral-400 mt-1">Provide image URLs, upload files, or both. Up to 5 photos. The first photo becomes primary automatically.</p>
+            <p className="text-xs text-neutral-400 mt-1">Provide image URLs, upload files, or both. Up to 4 photos. The first photo becomes primary automatically.</p>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[0,1,2,3,4].map((i) => (
+              {[0,1,2,3].map((i) => (
                 <div key={i} className="rounded-lg border border-neutral-800 p-3 bg-neutral-900/40">
                   <div className="text-sm text-neutral-300">Photo {i+1}</div>
                   <div id={`tfh-drop-${i}`} className="mt-2 aspect-[4/3] w-full overflow-hidden rounded-md border border-neutral-800 bg-neutral-950/60 flex items-center justify-center relative transition">
@@ -336,13 +363,14 @@ export default async function NewProfilePage() {
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
+            <button type="button" id="tfh-prev-step" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Back</button>
             <button type="submit" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
               <span className="inline-flex items-center gap-2">
                 <svg suppressHydrationWarning className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
                 <span data-label>Save</span>
               </span>
             </button>
+          </div>
           </div>
 
         </form>

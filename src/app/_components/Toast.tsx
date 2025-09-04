@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 export default function Toast({ message, type = "info" as const }: { message: string; type?: "success" | "error" | "info" }) {
   const [open, setOpen] = useState(true);
   useEffect(() => {
+    if (type === 'success') return; // persistent until user closes
     const t = setTimeout(() => setOpen(false), 5000);
     return () => clearTimeout(t);
-  }, []);
+  }, [type]);
   if (!open) return null;
   const styles =
     type === "success"
@@ -25,10 +26,9 @@ export default function Toast({ message, type = "info" as const }: { message: st
           onClick={() => setOpen(false)}
           className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-xs hover:bg-white/10"
         >
-          Close
+          ×
         </button>
       </div>
     </div>
   );
 }
-
