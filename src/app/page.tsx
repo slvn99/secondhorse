@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   ],
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // revalidate page every 60s
 
   async function loadHorsesFromDb(): Promise<Horse[]> {
   try {
@@ -84,7 +84,7 @@ export default async function SecondHorsePage() {
     <div className="relative w-full h-full">
       {/* Fixed background layer to keep visuals consistent across mobile/desktop */}
       <div className="fixed inset-0 -z-10">
-        <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority suppressHydrationWarning />
+        <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority suppressHydrationWarning sizes="100vw" />
         <div className="absolute inset-0 bg-black/50" />
       </div>
       {/* Foreground content scrolls independently */}

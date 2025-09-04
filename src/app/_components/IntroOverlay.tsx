@@ -69,6 +69,7 @@ export default function IntroOverlay() {
         fill
         priority
         suppressHydrationWarning
+        sizes="100vw"
         className="object-contain select-none pointer-events-none"
       />
       <div className="absolute inset-0 flex items-start justify-center p-6">

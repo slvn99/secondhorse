@@ -40,7 +40,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <MatchesSidebar />
           <div className="w-full flex-1 overflow-hidden h-full flex flex-col">
             <div className="px-3 pt-3">
-              <div className="rounded-lg bg-gradient-to-r from-pink-600 via-yellow-400 to-pink-600 text-black text-center font-semibold tracking-wide px-4 py-2 shadow-lg">
+              <div className="rounded-lg bg-gradient-to-r from-pink-600 via-yellow-400 to-pink-600 text-black text-center font-semibold tracking-wide px-4 py-2 shadow-lg"
+                   role="status" aria-live="polite">
                 🚧 Work in Progress: crafted by Sam with Love & Laughter —
                 <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="ml-1 inline-block underline underline-offset-4 hover:opacity-90">
                   samvannoord.nl

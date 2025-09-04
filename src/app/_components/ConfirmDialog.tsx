@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 export default function ConfirmDialog({
   open,
@@ -23,15 +23,34 @@ export default function ConfirmDialog({
     try { window.dispatchEvent(new CustomEvent('tfh:overlay', { detail: { open } })); } catch {}
   }, [open]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const node = containerRef.current;
+    if (!node) return;
+    const focusables = node.querySelectorAll<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])');
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    first?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+      if (e.key !== 'Tab' || !focusables.length) return;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    };
+    node.addEventListener('keydown', onKey);
+    return () => node.removeEventListener('keydown', onKey);
+  }, [onCancel, open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[1400]">
+    <div className="fixed inset-0 z-[1400]" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       <div className="fixed inset-0 bg-black/70" onClick={onCancel} aria-hidden="true" />
       <div className="relative z-10 flex min-h-full items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-neutral-900/95 backdrop-blur rounded-xl border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100" data-testid="confirm-dialog">
+        <div ref={containerRef} className="w-full max-w-sm bg-neutral-900/95 backdrop-blur rounded-xl border border-neutral-800 shadow-2xl overflow-hidden text-neutral-100" data-testid="confirm-dialog" tabIndex={-1}>
           <div className="px-5 py-4 border-b border-neutral-800">
-            <h4 className="text-base font-semibold">{title}</h4>
+            <h4 id="confirm-title" className="text-base font-semibold">{title}</h4>
           </div>
           <div className="px-5 py-4 text-sm text-neutral-200">
             {message}

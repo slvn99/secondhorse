@@ -1,6 +1,7 @@
 import React from 'react';
 import { vi } from 'vitest';
 import { act } from 'react';
+import { render as rtlRender, cleanup } from '@testing-library/react';
 import { TFH_STORAGE } from '@/lib/tfh';
 
 // Mock next/image to a plain img for DOM/jest-style testing
@@ -11,20 +12,13 @@ vi.mock('next/image', () => {
   };
 });
 
-// Simple helpers to render/unmount without testing-library
+// Render helper backed by Testing Library
 export function renderElement(el: React.ReactElement) {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const { createRoot } = require('react-dom/client');
-  const root = createRoot(container);
-  act(() => { root.render(el); });
+  const r = rtlRender(el);
   return {
-    container,
-    root,
-    unmount() {
-      try { act(() => { root.unmount(); }); } catch {}
-      container.remove();
-    },
+    container: r.container,
+    root: { unmount: r.unmount },
+    unmount() { try { r.unmount(); } catch {} try { cleanup(); } catch {} },
   } as const;
 }
 

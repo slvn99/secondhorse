@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { headers, cookies } from "next/headers";
 import Script from "next/script";
 import { saveImageAndGetUrl } from "../_lib/uploads";
+import { rateLimit } from "../_lib/rateLimit";
+import { z } from "zod";
 import NewFormClient from "./NewFormClient";
 
 export const metadata: Metadata = {
@@ -74,6 +76,14 @@ async function create(formData: FormData) {
     const store = await cookies();
     store.set("tfh_notice", JSON.stringify({ type, message }), { path: "/", maxAge, httpOnly: true, sameSite: "strict", secure: isProd });
   };
+  // Basic rate limit by IP to reduce abuse
+  const xffAll = hdrs.get("x-forwarded-for") || "";
+  const ipGuess = (xffAll.split(",")[0].trim() || hdrs.get("x-real-ip") || hdrs.get("fly-client-ip") || hdrs.get("cf-connecting-ip") || "unknown").toString();
+  const rl = rateLimit(`new:${ipGuess}`);
+  if (!rl.allowed) {
+    await setNotice("error", "Too many requests. Please try again in a minute.", 20);
+    redirect("/new");
+  }
   const ok = await allowedHost(hdrs as unknown as Headers);
   if (!ok) {
     await setNotice("error", "Request origin not allowed.", 20);
@@ -109,28 +119,55 @@ async function create(formData: FormData) {
     }
   } catch {}
 
-  const display_name = sanitizeText(getField(formData, "display_name"), 120);
-  if (!display_name) {
-    const store = await cookies();
-    const secure = process.env.NODE_ENV === "production";
-    store.set("tfh_notice", JSON.stringify({ type: "error", message: "Display name is required." }), { path: "/", maxAge: 20, httpOnly: true, sameSite: "strict", secure });
+  // Validate and coerce input with zod
+  const schema = z.object({
+    display_name: z.string().min(1).max(120),
+    bio: z.string().max(1000).optional().default(""),
+    age_years: z.coerce.number().int().min(0).max(40).optional().nullable(),
+    breed: z.string().max(120).optional().nullable(),
+    gender: z.enum(["mare", "stallion", "gelding", "unknown"]).optional().nullable(),
+    height_cm: z.coerce.number().int().min(50).max(230).optional().nullable(),
+    location_city: z.string().max(120).optional().nullable(),
+    location_country: z.string().max(120).optional().nullable(),
+    color: z.string().max(64).optional().nullable(),
+    temperament: z.string().max(64).optional().nullable(),
+    disciplines: z.string().optional().nullable(),
+    interests: z.string().optional().nullable(),
+  });
+  const raw = {
+    display_name: sanitizeText(getField(formData, "display_name"), 120),
+    bio: sanitizeText(getField(formData, "bio"), 1000),
+    age_years: getField(formData, "age_years"),
+    breed: sanitizeText(getField(formData, "breed"), 120) || null,
+    gender: sanitizeText(getField(formData, "gender"), 20) || null,
+    height_cm: getField(formData, "height_cm"),
+    location_city: sanitizeText(getField(formData, "location_city"), 120) || null,
+    location_country: sanitizeText(getField(formData, "location_country"), 120) || null,
+    color: sanitizeText(getField(formData, "color"), 64) || null,
+    temperament: sanitizeText(getField(formData, "temperament"), 64) || null,
+    disciplines: sanitizeText(getField(formData, "disciplines"), 500) || "",
+    interests: sanitizeText(getField(formData, "interests"), 500) || "",
+  } as any;
+  let parsed: z.infer<typeof schema>;
+  try {
+    parsed = schema.parse(raw);
+  } catch {
+    await setNotice("error", "Please check your input and try again.", 20);
     redirect("/new");
   }
 
-  const bio = sanitizeText(getField(formData, "bio"), 1000) || null;
-  const age_years = Number(getField(formData, "age_years") || "");
-  const age = Number.isFinite(age_years) ? age_years : null;
-  const breed = sanitizeText(getField(formData, "breed"), 120) || null;
-  const genderRaw = String(getField(formData, "gender") || "").toLowerCase();
-  const gender: string | null = ["mare", "stallion", "gelding", "unknown"].includes(genderRaw) ? genderRaw : null;
-  const height_cm_raw = Number(getField(formData, "height_cm") || "");
-  const height_cm = Number.isFinite(height_cm_raw) && height_cm_raw >= 50 && height_cm_raw <= 230 ? Math.round(height_cm_raw) : null;
-  const location_city = sanitizeText(getField(formData, "location_city"), 120) || null;
-  const location_country = sanitizeText(getField(formData, "location_country"), 120) || null;
-  const color = sanitizeText(getField(formData, "color"), 64) || null;
-  const temperament = sanitizeText(getField(formData, "temperament"), 64) || null;
-  const disciplines = parseCsvArray(getField(formData, "disciplines"));
-  const interests = parseCsvArray(getField(formData, "interests"));
+  const display_name = parsed!.display_name;
+  const bio = parsed!.bio || null;
+  const age = parsed!.age_years ?? null;
+  const breed = parsed!.breed || null;
+  const gender = parsed!.gender || null;
+  const height_cm = parsed!.height_cm ?? null;
+  const location_city = parsed!.location_city || null;
+  const location_country = parsed!.location_country || null;
+  const color = parsed!.color || null;
+  const temperament = parsed!.temperament || null;
+  const disciplines = parseCsvArray(parsed!.disciplines, 12, 48);
+  const interests = parseCsvArray(parsed!.interests, 12, 48);
 
   const photos: { url: string; position: number; is_primary: boolean }[] = [];
   let attemptedFileUpload = false;
