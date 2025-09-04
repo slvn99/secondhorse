@@ -38,7 +38,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <div className={`relative flex h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden ${styles.scope}`}>
           <IntroOverlay />
           <MatchesSidebar />
-          <div className="w-full flex-1 overflow-hidden h-full">{children}</div>
+          <div className="w-full flex-1 overflow-hidden h-full flex flex-col">
+            <div className="px-3 pt-3">
+              <div className="rounded-lg bg-gradient-to-r from-pink-600 via-yellow-400 to-pink-600 text-black text-center font-semibold tracking-wide px-4 py-2 shadow-lg">
+                🚧 Work in Progress: crafted by Sam with Love & Laughter —
+                <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="ml-1 inline-block underline underline-offset-4 hover:opacity-90">
+                  samvannoord.nl
+                </a>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              {children}
+            </div>
+          </div>
           <CollapsibleSidebar
         linkUrl="https://samvannoord.notion.site/2501089128d280dc8756faf0cc7c58f6?v=2501089128d28171bf7c000c1bdd27f9"
         hideMobileToggle

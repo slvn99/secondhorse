@@ -39,6 +39,7 @@
     "node_modules",
     "src/app/_lib/uploads.ts",
     "src/app/new/**/*",
+    "tests/**/*",
     "v2/**/*"
   ]
 }

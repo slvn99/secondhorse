@@ -84,7 +84,7 @@ export default async function SecondHorsePage() {
     <div className="relative w-full h-full">
       {/* Fixed background layer to keep visuals consistent across mobile/desktop */}
       <div className="fixed inset-0 -z-10">
-        <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority />
+        <Image src="/TFH/Tinder-for-Horses-background.png" alt="Second Horse Dating background" fill className="object-cover" priority suppressHydrationWarning />
         <div className="absolute inset-0 bg-black/50" />
       </div>
       {/* Foreground content scrolls independently */}

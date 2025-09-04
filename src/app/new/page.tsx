@@ -69,20 +69,21 @@ async function allowedHost(h: Headers): Promise<boolean> {
 async function create(formData: FormData) {
   "use server";
   const hdrs = await headers();
+  const isProd = process.env.NODE_ENV === "production";
+  const setNotice = async (type: "success" | "error" | "info", message: string, maxAge = 60) => {
+    const store = await cookies();
+    store.set("tfh_notice", JSON.stringify({ type, message }), { path: "/", maxAge, httpOnly: true, sameSite: "strict", secure: isProd });
+  };
   const ok = await allowedHost(hdrs as unknown as Headers);
   if (!ok) {
-    const store = await cookies();
-    const secure = process.env.NODE_ENV === "production";
-    store.set("tfh_notice", JSON.stringify({ type: "error", message: "Request origin not allowed." }), { path: "/", maxAge: 20, httpOnly: true, sameSite: "strict", secure });
+    await setNotice("error", "Request origin not allowed.", 20);
     redirect("/");
   }
 
   const url = process.env.DATABASE_URL;
   if (!url) {
     const namePreview = sanitizeText(getField(formData, "display_name"), 120) || "Profile";
-    const store = await cookies();
-    const secure = process.env.NODE_ENV === "production";
-    store.set("tfh_notice", JSON.stringify({ type: "success", message: `Saved \"${namePreview}\" (no database configured).` }), { path: "/", maxAge: 20, httpOnly: true, sameSite: "strict", secure });
+    await setNotice("success", `Saved \"${namePreview}\" (no database configured).`, 20);
     redirect("/");
   }
   const sql = neon(url);
@@ -92,8 +93,7 @@ async function create(formData: FormData) {
     if (process.env.NODE_ENV === "production" && secret) {
       const token = formData.get("h-captcha-response");
       if (!token || typeof token !== "string") {
-        const store = await cookies();
-        store.set("tfh_notice", JSON.stringify({ type: "error", message: "Captcha verification failed. Please try again." }), { path: "/", maxAge: 30, httpOnly: true, sameSite: "strict", secure: true });
+        await setNotice("error", "Captcha verification failed. Please try again.", 30);
         redirect("/new");
       }
       const xff = (await headers()).get("x-forwarded-for") || "";
@@ -103,8 +103,7 @@ async function create(formData: FormData) {
       const resp = await fetch("https://hcaptcha.com/siteverify", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body, cache: "no-store" });
       const data = (await resp.json()) as { success?: boolean };
       if (!data?.success) {
-        const store = await cookies();
-        store.set("tfh_notice", JSON.stringify({ type: "error", message: "Captcha check failed. Please try again." }), { path: "/", maxAge: 30, httpOnly: true, sameSite: "strict", secure: true });
+        await setNotice("error", "Captcha check failed. Please try again.", 30);
         redirect("/new");
       }
     }
@@ -211,16 +210,12 @@ async function create(formData: FormData) {
       } catch {}
     }
 
-    const store = await cookies();
-    const secure = process.env.NODE_ENV === "production";
-    store.set("tfh_notice", JSON.stringify({ type: "success", message: `Profile \"${display_name}\" created.${attemptedFileUpload && fileUploadFailed ? ' (image upload unavailable)' : ''}` }), { path: "/", maxAge: 60, httpOnly: true, sameSite: "strict", secure });
+    await setNotice("success", `Profile \"${display_name}\" created.${attemptedFileUpload && fileUploadFailed ? ' (image upload unavailable)' : ''}`);
     redirect("/");
   } catch (e) {
     const dig = (e as any)?.digest as string | undefined;
     if (typeof dig === "string" && dig.startsWith("NEXT_REDIRECT")) throw e;
-    const store = await cookies();
-    const secure = process.env.NODE_ENV === "production";
-    store.set("tfh_notice", JSON.stringify({ type: "error", message: "Failed to create profile. Please try again." }), { path: "/", maxAge: 60, httpOnly: true, sameSite: "strict", secure });
+    await setNotice("error", "Failed to create profile. Please try again.");
     redirect("/");
   }
 }

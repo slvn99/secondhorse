@@ -68,6 +68,7 @@ export default function IntroOverlay() {
         alt="Tinder for Horses cover"
         fill
         priority
+        suppressHydrationWarning
         className="object-contain select-none pointer-events-none"
       />
       <div className="absolute inset-0 flex items-start justify-center p-6">

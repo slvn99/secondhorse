@@ -63,7 +63,6 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `BLOB_READ_WRITE_TOKEN` (optional): Enables public image uploads to Vercel Blob on `/new`.
 - `ALLOWED_HOSTS` (optional): Comma‑separated hostnames allowed to submit the form (CSRF guard).
 - `HCAPTCHA_SECRET` (optional): When set in production, `/new` requires hCaptcha.
-- `MODERATION_SESSION_SECRET` (recommended in prod): Secret for signing moderation sessions.
 - `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
 - `VERCEL_GIT_COMMIT_SHA`/`GITHUB_SHA`/`COMMIT_SHA` (optional): Used for version label in the UI.
 
@@ -108,7 +107,7 @@ Security note: a previously committed `.env.local` has been removed from the rep
 **Deployment**
 - Designed for Vercel (Next.js 15). Ensure required env vars are set on the project.
 - Production constraints:
-  - Set `MODERATION_SESSION_SECRET` and `ALLOWED_HOSTS`.
+  - Set `ALLOWED_HOSTS`.
   - Add `HCAPTCHA_SECRET` if you want captcha on `/new`.
   - Add `BLOB_READ_WRITE_TOKEN` to allow file uploads; without it, uploads are disabled in prod.
 
