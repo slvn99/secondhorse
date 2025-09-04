@@ -323,7 +323,7 @@ export default async function NewProfilePage() {
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <a href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</a>
+            <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
             <button type="button" id="tfh-next-step" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Add photos</button>
           </div>
 
