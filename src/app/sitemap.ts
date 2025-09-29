@@ -4,7 +4,7 @@ import type { MetadataRoute } from 'next';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
-export const revalidate = 60 * 60; // refresh once per hour in prod
+export const revalidate = 3600; // refresh once per hour in prod
 
 type RouteInfo = {
   path: string;
