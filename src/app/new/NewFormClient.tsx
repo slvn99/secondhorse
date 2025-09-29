@@ -24,13 +24,21 @@ export default function NewFormClient() {
       if (indicator) indicator.textContent = `Step ${n} of 2`;
     };
 
+    const scrollToTop = () => {
+      if (typeof window === 'undefined' || typeof window.scrollTo !== 'function') return;
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' } as ScrollToOptions);
+      } catch {
+        try { window.scrollTo(0, 0); } catch {}
+      }
+    };
     const onNext = () => {
       const errBox = document.getElementById("tfh-form-error");
       const name = (form.querySelector('input[name="display_name"]') as HTMLInputElement | null)?.value?.trim() || "";
       if (!name) {
         if (errBox) { errBox.textContent = "Please enter a display name to continue."; errBox.classList.remove("hidden"); errBox.setAttribute('tabindex','-1'); (errBox as any).focus?.(); }
         (form.querySelector('input[name="display_name"]') as HTMLInputElement | null)?.focus?.();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToTop();
         return;
       }
       if (errBox) errBox.classList.add("hidden");
