@@ -13,6 +13,17 @@ type RouteInfo = {
 
 const appDirectory = path.join(process.cwd(), 'src', 'app');
 
+function resolveBaseUrl(): string {
+  const direct = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (direct) return direct.replace(/\/+$/, '');
+  const vercelDomain = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL;
+  if (vercelDomain) {
+    const normalized = vercelDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    return `https://${normalized}`;
+  }
+  return 'https://secondhorse.nl';
+}
+
 async function collectStaticRoutes(dir: string, segments: string[] = []): Promise<RouteInfo[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const routes: RouteInfo[] = [];
@@ -40,7 +51,7 @@ async function collectStaticRoutes(dir: string, segments: string[] = []): Promis
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  const baseUrl = resolveBaseUrl();
   const staticRoutes = await collectStaticRoutes(appDirectory);
 
   const routeMap = new Map<string, RouteInfo>();
