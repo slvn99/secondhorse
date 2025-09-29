@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { MetadataRoute } from 'next';
+import { resolveBaseUrl } from './_lib/baseUrl';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-static';
@@ -12,17 +13,6 @@ type RouteInfo = {
 };
 
 const appDirectory = path.join(process.cwd(), 'src', 'app');
-
-function resolveBaseUrl(): string {
-  const direct = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (direct) return direct.replace(/\/+$/, '');
-  const vercelDomain = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL;
-  if (vercelDomain) {
-    const normalized = vercelDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-    return `https://${normalized}`;
-  }
-  return 'https://secondhorse.nl';
-}
 
 async function collectStaticRoutes(dir: string, segments: string[] = []): Promise<RouteInfo[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
