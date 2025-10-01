@@ -293,42 +293,228 @@ export default async function NewProfilePage() {
           {/* Step indicator moved to header */}
 
           <div id="tfh-step-1" className="space-y-6">
-          <div className="rounded-2xl border border-yellow-700/50 bg-yellow-900/10 p-4">
-            <h2 className="text-lg font-semibold text-neutral-200">Basic Info</h2>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-sm text-neutral-300">Display name <span className="text-yellow-400">*</span><input aria-describedby="hint-name" name="display_name" required maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-name" className="mt-1 text-xs text-neutral-400">Public name shown on the profile.</p></label>
-              <label className="text-sm text-neutral-300">Breed<input name="breed" maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
-              <label className="text-sm text-neutral-300">Gender<select name="gender" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"><option value="mare">Mare</option><option value="stallion">Stallion</option><option value="gelding">Gelding</option><option value="unknown">Prefer not to say</option></select></label>
-              <label className="text-sm text-neutral-300">Age (years)<input aria-describedby="hint-age" type="number" name="age_years" min={0} max={40} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-age" className="mt-1 text-xs text-neutral-400">Optional. 0–40.</p></label>
-              <label className="text-sm text-neutral-300">Height (cm)<input aria-describedby="hint-height" type="number" name="height_cm" min={50} max={230} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-height" className="mt-1 text-xs text-neutral-400">Optional. 50–230 cm at withers.</p></label>
-              <label className="text-sm text-neutral-300">Color<input name="color" maxLength={64} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
+            <div className="rounded-2xl border border-yellow-700/50 bg-yellow-900/10 p-4">
+              <h2 className="text-lg font-semibold text-neutral-200">Basic Info</h2>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-sm text-neutral-300">
+                  Display name <span className="text-yellow-400">*</span>
+                  <input
+                    aria-describedby="hint-name"
+                    name="display_name"
+                    required
+                    autoComplete="name"
+                    maxLength={120}
+                    data-field="display_name"
+                    data-required-label="Display name"
+                    data-maxlength={120}
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-start justify-between text-xs text-neutral-400">
+                    <p id="hint-name" className="leading-snug">Public name shown on the profile.</p>
+                    <span data-count-for="display_name" aria-live="polite" className="pl-2 text-neutral-500">0 / 120</span>
+                  </div>
+                  <p data-error-for="display_name" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Breed
+                  <input
+                    name="breed"
+                    maxLength={120}
+                    data-field="breed"
+                    data-maxlength={120}
+                    autoComplete="off"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Optional. Max 120 characters.</span>
+                    <span data-count-for="breed" aria-live="polite">0 / 120</span>
+                  </div>
+                  <p data-error-for="breed" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Gender
+                  <select
+                    name="gender"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  >
+                    <option value="mare">Mare</option>
+                    <option value="stallion">Stallion</option>
+                    <option value="gelding">Gelding</option>
+                    <option value="unknown">Prefer not to say</option>
+                  </select>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Age (years)
+                  <input
+                    aria-describedby="hint-age"
+                    type="number"
+                    name="age_years"
+                    min={0}
+                    max={40}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    data-number-field="age_years"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <p id="hint-age" className="mt-1 text-xs text-neutral-400">Optional. 0-40.</p>
+                  <p data-error-for="age_years" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Height (cm)
+                  <input
+                    aria-describedby="hint-height"
+                    type="number"
+                    name="height_cm"
+                    min={50}
+                    max={230}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    data-number-field="height_cm"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <p id="hint-height" className="mt-1 text-xs text-neutral-400">Optional. 50-230 cm at withers.</p>
+                  <p data-error-for="height_cm" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Color
+                  <input
+                    name="color"
+                    maxLength={64}
+                    data-field="color"
+                    data-maxlength={64}
+                    autoComplete="off"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Optional. Max 64 characters.</span>
+                    <span data-count-for="color" aria-live="polite">0 / 64</span>
+                  </div>
+                  <p data-error-for="color" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Temperament
+                  <input
+                    name="temperament"
+                    maxLength={64}
+                    data-field="temperament"
+                    data-maxlength={64}
+                    autoComplete="off"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Optional. Max 64 characters.</span>
+                    <span data-count-for="temperament" aria-live="polite">0 / 64</span>
+                  </div>
+                  <p data-error-for="temperament" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+              </div>
+              <label className="block mt-3 text-sm text-neutral-300">
+                Bio
+                <textarea
+                  name="bio"
+                  rows={4}
+                  maxLength={1000}
+                  data-field="bio"
+                  data-maxlength={1000}
+                  className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                />
+                <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                  <span>Optional. Up to 1000 characters.</span>
+                  <span data-count-for="bio" aria-live="polite">0 / 1000</span>
+                </div>
+                <p data-error-for="bio" className="mt-1 text-xs text-red-300 hidden"></p>
+              </label>
             </div>
-            <label className="block mt-3 text-sm text-neutral-300">Bio<textarea name="bio" rows={4} maxLength={1000} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
-          </div>
 
-          <div className="rounded-2xl border border-blue-700/40 bg-blue-900/10 p-4">
-            <h2 className="text-lg font-semibold text-neutral-200">Location</h2>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-sm text-neutral-300">City<input name="location_city" maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
-              <label className="text-sm text-neutral-300">Country<input name="location_country" maxLength={120} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /></label>
+            <div className="rounded-2xl border border-blue-700/40 bg-blue-900/10 p-4">
+              <h2 className="text-lg font-semibold text-neutral-200">Location</h2>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-sm text-neutral-300">
+                  City
+                  <input
+                    name="location_city"
+                    maxLength={120}
+                    data-field="location_city"
+                    data-maxlength={120}
+                    autoComplete="address-level2"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Optional. Max 120 characters.</span>
+                    <span data-count-for="location_city" aria-live="polite">0 / 120</span>
+                  </div>
+                  <p data-error-for="location_city" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Country
+                  <input
+                    name="location_country"
+                    maxLength={120}
+                    data-field="location_country"
+                    data-maxlength={120}
+                    autoComplete="country-name"
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-500">
+                    <span>Optional. Max 120 characters.</span>
+                    <span data-count-for="location_country" aria-live="polite">0 / 120</span>
+                  </div>
+                  <p data-error-for="location_country" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-2xl border border-pink-700/40 bg-pink-900/10 p-4">
-            <h2 className="text-lg font-semibold text-neutral-200">Interests & Disciplines</h2>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-sm text-neutral-300">Interests (comma-separated)<input aria-describedby="hint-interests" name="interests" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-interests" className="mt-1 text-xs text-neutral-400">e.g., trail rides, grooming, carrots</p></label>
-              <label className="text-sm text-neutral-300">Disciplines (comma-separated)<input aria-describedby="hint-disciplines" name="disciplines" maxLength={500} className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" /><p id="hint-disciplines" className="mt-1 text-xs text-neutral-400">e.g., dressage, jumping, trail</p></label>
+            <div className="rounded-2xl border border-pink-700/40 bg-pink-900/10 p-4">
+              <h2 className="text-lg font-semibold text-neutral-200">Interests &amp; Disciplines</h2>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-sm text-neutral-300">
+                  Interests (comma-separated)
+                  <input
+                    aria-describedby="hint-interests"
+                    name="interests"
+                    maxLength={500}
+                    data-field="interests"
+                    data-maxlength={500}
+                    data-list-field="comma"
+                    data-list-limit={12}
+                    data-list-max={48}
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-400">
+                    <p id="hint-interests" className="leading-snug">e.g., trail rides, grooming, carrots.</p>
+                    <span data-count-for="interests" aria-live="polite" className="pl-2 text-neutral-500">0 / 500</span>
+                  </div>
+                  <p data-error-for="interests" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+                <label className="text-sm text-neutral-300">
+                  Disciplines (comma-separated)
+                  <input
+                    aria-describedby="hint-disciplines"
+                    name="disciplines"
+                    maxLength={500}
+                    data-field="disciplines"
+                    data-maxlength={500}
+                    data-list-field="comma"
+                    data-list-limit={12}
+                    data-list-max={48}
+                    className="mt-1 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2"
+                  />
+                  <div className="mt-1 flex items-center justify-between text-xs text-neutral-400">
+                    <p id="hint-disciplines" className="leading-snug">e.g., dressage, jumping, trail.</p>
+                    <span data-count-for="disciplines" aria-live="polite" className="pl-2 text-neutral-500">0 / 500</span>
+                  </div>
+                  <p data-error-for="disciplines" className="mt-1 text-xs text-red-300 hidden"></p>
+                </label>
+              </div>
+              <p className="mt-1 text-xs text-neutral-500">We allow up to 12 entries per list and trim anything longer than 48 characters.</p>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
-            <button type="button" id="tfh-next-step" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Add photos</button>
-          </div>
+            <div className="flex items-center justify-between gap-2">
+              <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
+              <button type="button" id="tfh-next-step" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Add photos</button>
+            </div>
 
           </div>
-
           <div id="tfh-step-2" className="space-y-6 hidden">
           <div className="rounded-2xl border border-neutral-700/40 bg-neutral-900/20 p-4">
             <h2 className="text-lg font-semibold text-neutral-200">Photos</h2>
