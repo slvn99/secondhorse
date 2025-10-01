@@ -266,10 +266,10 @@ export default async function NewProfilePage() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-semibold">Add Horse Profile</h1>
               <span id="tfh-step-indicator" aria-live="polite" className="inline-flex items-center gap-2 text-[11px] font-medium px-2 py-0.5 rounded bg-neutral-800/70 border border-neutral-700 text-neutral-200">
-                Step 1 of 2
+                Step 1 of 3
               </span>
             </div>
-            <div className="flex items-center gap-3" />
+            <Link id="tfh-home-link" href="/" className="inline-flex items-center gap-2 rounded border border-neutral-700 px-3 py-1 text-sm text-neutral-200 hover:bg-neutral-800 transition">Back home</Link>
           </div>
         </div>
 
@@ -278,13 +278,6 @@ export default async function NewProfilePage() {
         <form id="tfh-new-form" action={create} className="space-y-6 mt-6">
           {notice && notice.type === "error" && (<div className="rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm">{notice.message}</div>)}
           <div id="tfh-form-error" className="hidden rounded border border-red-800 bg-red-900/40 text-red-200 px-3 py-2 text-sm"></div>
-          <div id="tfh-draft-banner" className="hidden rounded border border-blue-800 bg-blue-900/40 text-blue-100 px-3 py-2 text-sm flex items-center justify-between gap-2">
-            <span>A saved draft is available.</span>
-            <span className="flex items-center gap-2">
-              <button type="button" id="tfh-draft-restore" className="rounded border border-blue-700 bg-blue-800 px-2 py-1 text-xs hover:bg-blue-700">Restore</button>
-              <button type="button" id="tfh-draft-discard" className="rounded border border-blue-700 bg-blue-800 px-2 py-1 text-xs hover:bg-blue-700">Discard</button>
-            </span>
-          </div>
           <p className="text-sm text-neutral-400">Fields marked with <span className="text-yellow-400">*</span> are required. Others are optional.</p>
           <div className="mt-2 rounded-md border border-yellow-700/40 bg-yellow-900/20 text-yellow-100 px-3 py-2 text-xs">
             All profiles are reviewed by a human before publishing. Submissions may take up to 24 hours.
@@ -426,6 +419,13 @@ export default async function NewProfilePage() {
               </label>
             </div>
 
+            <div className="flex items-center justify-between gap-2">
+              <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
+              <button type="button" id="tfh-next-step-1" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Continue</button>
+            </div>
+
+          </div>
+          <div id="tfh-step-2" className="space-y-6 hidden">
             <div className="rounded-2xl border border-blue-700/40 bg-blue-900/10 p-4">
               <h2 className="text-lg font-semibold text-neutral-200">Location</h2>
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -510,53 +510,54 @@ export default async function NewProfilePage() {
             </div>
 
             <div className="flex items-center justify-between gap-2">
-              <Link href="/" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Cancel</Link>
-              <button type="button" id="tfh-next-step" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Add photos</button>
+              <button type="button" id="tfh-prev-step-2" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Back</button>
+              <button type="button" id="tfh-next-step-2" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400">Continue</button>
             </div>
 
           </div>
-          <div id="tfh-step-2" className="space-y-6 hidden">
-          <div className="rounded-2xl border border-neutral-700/40 bg-neutral-900/20 p-4">
-            <h2 className="text-lg font-semibold text-neutral-200">Photos</h2>
-            <p className="text-xs text-neutral-400 mt-1">Provide image URLs, upload files, or both. Up to 4 photos. The first photo becomes primary automatically.</p>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[0,1,2,3].map((i) => (
-                <div key={i} className="rounded-lg border border-neutral-800 p-3 bg-neutral-900/40">
-                  <div className="text-sm text-neutral-300">Photo {i+1}</div>
-                  <div id={`tfh-drop-${i}`} className="mt-2 aspect-[4/3] w-full overflow-hidden rounded-md border border-neutral-800 bg-neutral-950/60 flex items-center justify-center relative transition">
-                    {/* Preview image – updated by NewFormClient */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img id={`tfh-photo-prev-${i}`} alt={`Preview ${i+1}`} className="max-h-full max-w-full object-contain opacity-0 transition-opacity duration-200" />
-                    <div id={`tfh-drop-overlay-${i}`} className="pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-neutral-200 bg-black/30">Drop image to upload</div>
+
+          <div id="tfh-step-3" className="space-y-6 hidden">
+            <div className="rounded-2xl border border-neutral-700/40 bg-neutral-900/20 p-4">
+              <h2 className="text-lg font-semibold text-neutral-200">Photos</h2>
+              <p className="text-xs text-neutral-400 mt-1">Provide image URLs, upload files, or both. Up to 4 photos. The first photo becomes primary automatically. Aim for at least 600px on the longest side and 400px on the shortest.</p>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[0,1,2,3].map((i) => (
+                  <div key={i} className="rounded-lg border border-neutral-800 p-3 bg-neutral-900/40">
+                    <div className="text-sm text-neutral-300">Photo {i+1}</div>
+                    <div id={`tfh-drop-${i}`} className="mt-2 aspect-[4/3] w-full overflow-hidden rounded-md border border-neutral-800 bg-neutral-950/60 flex items-center justify-center relative transition">
+                      {/* Preview image - updated by NewFormClient */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img id={`tfh-photo-prev-${i}`} alt={`Preview ${i+1}`} className="max-h-full max-w-full object-contain opacity-0 transition-opacity duration-200" />
+                      <div id={`tfh-drop-overlay-${i}`} className="pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-neutral-200 bg-black/30">Drop image to upload</div>
+                    </div>
+                    <input id={`tfh-photo-url-${i}`} type="url" name={`photo_${i}`} placeholder="https://..." className="mt-2 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" />
+                    <input id={`tfh-photo-file-${i}`} type="file" name={`photo_file_${i}`} accept="image/*" className="mt-2 w-full text-sm text-neutral-300 file:mr-3 file:rounded file:border-0 file:bg-neutral-800 file:text-neutral-200 file:px-3 file:py-1.5" />
+                    <div className="mt-2 flex items-center justify-end">
+                      <button type="button" id={`tfh-photo-remove-${i}`} className="text-xs text-neutral-300 hover:text-white underline underline-offset-2">Remove photo</button>
+                    </div>
+                    <div id={`tfh-photo-err-${i}`} className="hidden mt-1 text-xs text-red-300"></div>
                   </div>
-                  <input id={`tfh-photo-url-${i}`} type="url" name={`photo_${i}`} placeholder="https://..." className="mt-2 w-full rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-2" />
-                  <input id={`tfh-photo-file-${i}`} type="file" name={`photo_file_${i}`} accept="image/*" className="mt-2 w-full text-sm text-neutral-300 file:mr-3 file:rounded file:border-0 file:bg-neutral-800 file:text-neutral-200 file:px-3 file:py-1.5" />
-                  <div className="mt-2 flex items-center justify-end">
-                    <button type="button" id={`tfh-photo-remove-${i}`} className="text-xs text-neutral-300 hover:text-white underline underline-offset-2">Remove photo</button>
-                  </div>
-                  <div id={`tfh-photo-err-${i}`} className="hidden mt-1 text-xs text-red-300"></div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-2xl border border-green-700/40 bg-green-900/10 p-4">
-            <h2 className="text-lg font-semibold text-neutral-200">Verification</h2>
-            <p className="text-xs text-neutral-400 mt-1">Help us prevent spam by completing the captcha.</p>
-            <div className="mt-3">
-              <div className="h-captcha" data-sitekey="feb4b2b0-056c-4444-b752-faf436125ec0" data-theme="dark"></div>
+            <div className="rounded-2xl border border-green-700/40 bg-green-900/10 p-4">
+              <h2 className="text-lg font-semibold text-neutral-200">Verification</h2>
+              <p className="text-xs text-neutral-400 mt-1">Help us prevent spam by completing the captcha.</p>
+              <div className="mt-3">
+                <div className="h-captcha" data-sitekey="feb4b2b0-056c-4444-b752-faf436125ec0" data-theme="dark"></div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <button type="button" id="tfh-prev-step" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Back</button>
-            <button type="submit" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
-              <span className="inline-flex items-center gap-2">
-                <svg suppressHydrationWarning className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
-                <span data-label>Save</span>
-              </span>
-            </button>
-          </div>
+            <div className="flex items-center justify-between gap-2">
+              <button type="button" id="tfh-prev-step-3" className="px-3 py-1.5 rounded border border-neutral-700 text-neutral-200 hover:bg-neutral-800 text-sm">Back</button>
+              <button type="submit" id="tfh-save-btn" className="px-3 py-1.5 rounded bg-yellow-500 text-black text-sm font-medium hover:bg-yellow-400 disabled:opacity-60 disabled:cursor-not-allowed">
+                <span className="inline-flex items-center gap-2">
+                  <svg suppressHydrationWarning className="hidden animate-spin h-4 w-4" data-spinner aria-hidden viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"></path></svg>
+                  <span data-label>Save</span>
+                </span>
+              </button>
+            </div>
           </div>
 
         </form>

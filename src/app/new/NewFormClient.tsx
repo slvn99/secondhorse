@@ -5,22 +5,29 @@ import { useEffect } from "react";
 type FieldElement = HTMLInputElement | HTMLTextAreaElement;
 type RefreshFn = () => void;
 
+const PHOTO_MIN_LONG_SIDE = 600;
+const PHOTO_MIN_SHORT_SIDE = 400;
+
 export default function NewFormClient() {
   useEffect(() => {
     const form = document.getElementById("tfh-new-form") as HTMLFormElement | null;
     const btn = document.getElementById("tfh-save-btn") as HTMLButtonElement | null;
     if (!form || !btn) return;
-    const draftKey = "tfh_new_draft";
-    const stepKey = "tfh_new_step";
     const step1 = document.getElementById("tfh-step-1");
     const step2 = document.getElementById("tfh-step-2");
-    const nextBtn = document.getElementById("tfh-next-step");
-    const prevBtn = document.getElementById("tfh-prev-step");
+    const step3 = document.getElementById("tfh-step-3");
+    const nextStep1 = document.getElementById("tfh-next-step-1");
+    const nextStep2 = document.getElementById("tfh-next-step-2");
+    const prevStep2 = document.getElementById("tfh-prev-step-2");
+    const prevStep3 = document.getElementById("tfh-prev-step-3");
     const indicator = document.getElementById("tfh-step-indicator");
+    const formError = document.getElementById("tfh-form-error");
 
     const fieldRefreshers: RefreshFn[] = [];
 
     const revokers: Array<() => void> = [];
+    const steps: Array<HTMLElement | null> = [step1, step2, step3];
+    let currentStep: 1 | 2 | 3 = 1;
 
 
 
@@ -74,7 +81,7 @@ export default function NewFormClient() {
 
         field.setAttribute("aria-invalid", "true");
 
-        document.getElementById("tfh-form-error")?.classList.add("hidden");
+        formError?.classList.add("hidden");
 
         if (target) {
 
@@ -398,103 +405,80 @@ export default function NewFormClient() {
 
 
 
-    const goStep = (n: 1 | 2) => {
-
-      if (step1 && step2) {
-
-        if (n === 1) {
-
-          step1.classList.remove("hidden");
-
-          step2.classList.add("hidden");
-
-        } else {
-
-          step1.classList.add("hidden");
-
-          step2.classList.remove("hidden");
-
-        }
-
-        try { form.setAttribute("aria-busy", "false"); } catch {}
-
-      }
-
-      if (indicator) indicator.textContent = `Step ${n} of 2`;
-
+    const goStep = (n: 1 | 2 | 3) => {
+      currentStep = n;
+      steps.forEach((step, idx) => {
+        if (!step) return;
+        if (idx === n - 1) step.classList.remove("hidden");
+        else step.classList.add("hidden");
+      });
+      try { form.setAttribute("aria-busy", "false"); } catch {}
+      if (indicator) indicator.textContent = `Step ${n} of 3`;
     };
 
 
 
     const scrollToTop = () => {
-
       if (typeof window === 'undefined' || typeof window.scrollTo !== 'function') return;
-
       try {
-
         window.scrollTo({ top: 0, behavior: 'smooth' } as ScrollToOptions);
-
       } catch {
-
         try { window.scrollTo(0, 0); } catch {}
-
       }
-
     };
 
-    const onNext = () => {
-
-      const errBox = document.getElementById("tfh-form-error");
-
+    const requireDisplayName = () => {
       const nameInput = form.querySelector<HTMLInputElement>('input[name="display_name"]');
-
       const name = nameInput?.value?.trim() || "";
-
       if (!name) {
-
         if (nameInput) {
-
           nameInput.dataset.touched = "true";
-
         }
-
         runFieldRefreshers();
-
-        if (errBox) { errBox.textContent = "Please enter a display name to continue."; errBox.classList.remove("hidden"); errBox.setAttribute('tabindex','-1'); (errBox as any).focus?.(); }
-
+        if (formError) {
+          formError.textContent = "Please enter a display name to continue.";
+          formError.classList.remove("hidden");
+          formError.setAttribute('tabindex', '-1');
+          (formError as any).focus?.();
+        }
         nameInput?.focus?.();
-
         scrollToTop();
-
-        return;
-
+        return false;
       }
+      formError?.classList.add("hidden");
+      return true;
+    };
 
-      if (errBox) errBox.classList.add("hidden");
-
-      try { localStorage.setItem(stepKey, "2"); } catch {}
-
+    const goToStep2 = () => {
+      if (!requireDisplayName()) return;
       goStep(2);
-
+      scrollToTop();
     };
 
+    const goToStep3 = () => {
+      formError?.classList.add("hidden");
+      goStep(3);
+      scrollToTop();
+    };
 
-
-    const onPrev = () => {
-
-      try { localStorage.setItem(stepKey, "1"); } catch {}
-
+    const backToStep1 = () => {
+      formError?.classList.add("hidden");
       goStep(1);
-
+      scrollToTop();
     };
 
+    const backToStep2 = () => {
+      formError?.classList.add("hidden");
+      goStep(2);
+      scrollToTop();
+    };
 
+    nextStep1?.addEventListener("click", goToStep2);
+    nextStep2?.addEventListener("click", goToStep3);
+    prevStep2?.addEventListener("click", backToStep1);
+    prevStep3?.addEventListener("click", backToStep2);
 
-    nextBtn?.addEventListener("click", onNext);
-
-    prevBtn?.addEventListener("click", onPrev);
-
-
+    goStep(1);
 
     const onSubmit = (ev: Event) => {
 
@@ -504,7 +488,7 @@ export default function NewFormClient() {
 
       const tokenEl = document.querySelector<HTMLTextAreaElement>('textarea[name="h-captcha-response"]');
 
-      const errBox = document.getElementById("tfh-form-error");
+      const errBox = formError;
 
       const hasWidget = !!document.querySelector<HTMLElement>('.h-captcha');
 
@@ -543,13 +527,16 @@ export default function NewFormClient() {
     form.addEventListener("submit", onSubmit);
 
     const onKeydown = (e: KeyboardEvent) => {
-
       if (e.key !== 'Enter') return;
-
-      if ((e.target as HTMLElement)?.tagName === 'TEXTAREA') return;
-
-      if (step1 && !step1.classList.contains('hidden')) { e.preventDefault(); onNext(); }
-
+      const target = e.target as HTMLElement | null;
+      if (target && target.tagName === 'TEXTAREA') return;
+      if (currentStep === 1) {
+        e.preventDefault();
+        goToStep2();
+      } else if (currentStep === 2) {
+        e.preventDefault();
+        goToStep3();
+      }
     };
 
     form.addEventListener('keydown', onKeydown);
@@ -605,57 +592,44 @@ export default function NewFormClient() {
       };
 
       const validateFile = async (file: File) => {
-
         const maxBytes = 5 * 1024 * 1024; // 5MB
-
         if (!file.type.startsWith("image/")) { setError("File must be an image."); return false; }
-
         if (file.size > maxBytes) { setError("Image must be 5MB or smaller."); return false; }
-
         let testUrl: string | null = null;
-
+        let width = 0;
+        let height = 0;
         try {
-
           testUrl = URL.createObjectURL(file);
-
           await new Promise<void>((resolve, reject) => {
-
             const pic = new Image();
-
-            pic.onload = () => { (pic.width >= 600 && pic.height >= 600) ? resolve() : reject(new Error("too-small")); };
-
+            pic.onload = () => {
+              width = pic.naturalWidth || pic.width || 0;
+              height = pic.naturalHeight || pic.height || 0;
+              const longSide = Math.max(width, height);
+              const shortSide = Math.min(width, height);
+              if (longSide < PHOTO_MIN_LONG_SIDE || shortSide < PHOTO_MIN_SHORT_SIDE) {
+                reject(new Error("too-small"));
+                return;
+              }
+              resolve();
+            };
             pic.onerror = () => reject(new Error("invalid"));
-
             pic.src = testUrl!;
-
           });
-
         } catch (err) {
-
+          const dimHint = width && height ? ` (got ${width}x${height})` : "";
           const message = err instanceof Error && err.message === "too-small"
-
-            ? "Image must be at least 600x600 pixels."
-
+            ? `Image must be at least ${PHOTO_MIN_LONG_SIDE}px on the longest side and ${PHOTO_MIN_SHORT_SIDE}px on the shortest side${dimHint}.`
             : "Could not read the image. Please try another file.";
-
           setError(message);
-
           return false;
-
         } finally {
-
           if (testUrl) {
-
             try { URL.revokeObjectURL(testUrl); } catch {}
-
           }
-
         }
-
         setError(null);
-
         return true;
-
       };
 
       const update = () => {
@@ -874,113 +848,14 @@ export default function NewFormClient() {
 
     for (let i = 0; i < 4; i++) applyPreviewFor(i);
 
-    // Draft: autosave/restore
-    const draftBanner = document.getElementById("tfh-draft-banner");
-    const draftRestore = document.getElementById("tfh-draft-restore");
-    const draftDiscard = document.getElementById("tfh-draft-discard");
-    let hasDraftSaved = false;
-
-    const collectDraft = () => {
-      const data: Record<string, string> = {};
-      form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input[name], textarea[name], select[name]").forEach((el) => {
-        if (el instanceof HTMLInputElement && el.type === "file") return;
-        data[el.name] = el.value || "";
-      });
-      return data;
-    };
-    const emptyForm = () => {
-      for (const el of form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input[name], textarea[name], select[name]")) {
-        if (el instanceof HTMLInputElement && el.type === "file") continue;
-        if (el.value) return false;
-      }
-      return true;
-    };
-    // Auto-restore if we have a draft (so refresh retains data)
-    try {
-      const saved = localStorage.getItem(draftKey);
-      if (saved) {
-        const data = JSON.parse(saved) as Record<string, string>;
-        form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input[name], textarea[name], select[name]").forEach((el) => {
-          if (el instanceof HTMLInputElement && el.type === "file") return;
-          if (data[el.name] !== undefined) {
-            el.value = data[el.name];
-            if (data[el.name]) el.setAttribute("data-touched", "true");
-          }
-        });
-        hasDraftSaved = Object.values(data).some((value) => typeof value === "string" && value.trim().length > 0);
-      } else {
-        hasDraftSaved = false;
-      }
-      // Decide initial step: if there's an error notice, keep saved step; otherwise reset to step 1
-      const flags = document.getElementById('tfh-flags');
-      const notice = flags?.getAttribute('data-notice') || '';
-      if (notice) {
-        const st = localStorage.getItem(stepKey);
-        if (st === '2') goStep(2); else goStep(1);
-      } else {
-        try { localStorage.setItem(stepKey, '1'); } catch {}
-        goStep(1);
-      }
-    } catch { goStep(1); }
-
-    runFieldRefreshers();
-    if (hasDraftSaved) draftBanner?.classList.remove('hidden');
-    else draftBanner?.classList.add('hidden');
-
-    const restore = () => {
-      try {
-        const saved = localStorage.getItem(draftKey);
-        if (!saved) return;
-        const data = JSON.parse(saved) as Record<string, string>;
-        form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input[name], textarea[name], select[name]").forEach((el) => {
-          if (el instanceof HTMLInputElement && el.type === "file") return;
-          if (data[el.name] !== undefined) {
-            el.value = data[el.name];
-            if (data[el.name]) el.setAttribute("data-touched", "true");
-          }
-        });
-        hasDraftSaved = Object.values(data).some((value) => typeof value === "string" && value.trim().length > 0);
-        runFieldRefreshers();
-        draftBanner?.classList.add("hidden");
-      } catch {}
-    };
-    const discard = () => {
-      try { localStorage.removeItem(draftKey); } catch {}
-      hasDraftSaved = false;
-      draftBanner?.classList.add("hidden");
-    };
-    draftRestore?.addEventListener("click", restore);
-    draftDiscard?.addEventListener("click", discard);
-    revokers.push(() => { draftRestore?.removeEventListener("click", restore); draftDiscard?.removeEventListener("click", discard); });
-
-    let saveTimer: ReturnType<typeof setTimeout> | null = null;
-    const scheduleSave = () => {
-      if (saveTimer) clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => {
-        const payload = collectDraft();
-        const hasContent = Object.values(payload).some((value) => typeof value === "string" && value.trim().length > 0);
-        try {
-          if (hasContent) {
-            localStorage.setItem(draftKey, JSON.stringify(payload));
-            draftBanner?.classList.remove("hidden");
-            hasDraftSaved = true;
-          } else {
-            localStorage.removeItem(draftKey);
-            draftBanner?.classList.add("hidden");
-            hasDraftSaved = false;
-          }
-        } catch {}
-      }, 800);
-    };
-    form.addEventListener("input", scheduleSave);
-    form.addEventListener("change", scheduleSave);
-    revokers.push(() => { if (saveTimer) clearTimeout(saveTimer); form.removeEventListener("input", scheduleSave); form.removeEventListener("change", scheduleSave); });
-
+    
     return () => {
       form.removeEventListener("submit", onSubmit);
       form.removeEventListener("keydown", onKeydown);
-      nextBtn?.removeEventListener("click", onNext);
-      prevBtn?.removeEventListener("click", onPrev);
+      nextStep1?.removeEventListener("click", goToStep2);
+      nextStep2?.removeEventListener("click", goToStep3);
+      prevStep2?.removeEventListener("click", backToStep1);
+      prevStep3?.removeEventListener("click", backToStep2);
       revokers.forEach((fn) => fn());
     };
   }, []);

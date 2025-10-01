@@ -3,10 +3,31 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
 import imageSize from "image-size";
-import sharp from "sharp";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+
+const MIN_IMAGE_LONG_SIDE = 600;
+
+const MIN_IMAGE_SHORT_SIDE = 400;
+
+
+
+let sharpLoader: Promise<any> | null = null;
+
+async function loadSharp(): Promise<any> {
+
+  if (!sharpLoader) {
+
+    sharpLoader = import("sharp").then((mod) => (mod as any)?.default ?? mod).catch(() => null);
+
+  }
+
+  return sharpLoader;
+
+}
+
+
 
 function sniffExt(buf: Buffer): string | null {
   if (buf.length < 12) return null;
@@ -33,24 +54,34 @@ export async function saveImageAndGetUrl(file: File): Promise<string> {
   const buf = Buffer.from(await file.arrayBuffer());
   const extFromMagic = sniffExt(buf);
   // Dimension/quality checks
+  let width = 0;
+  let height = 0;
   try {
     const dim = imageSize(buf as any);
-    const w = dim.width || 0;
-    const h = dim.height || 0;
-    if (w < 600 || h < 600) throw new Error("too small");
+    width = dim.width ?? 0;
+    height = dim.height ?? 0;
   } catch {
-    throw new Error("Image must be at least 600x600");
+    throw new Error("Could not determine image dimensions");
   }
-  // Strip metadata (EXIF) by re-encoding via sharp; ignore failure gracefully
+  const longSide = Math.max(width, height);
+  const shortSide = Math.min(width, height);
+  if (!longSide || !shortSide || longSide < MIN_IMAGE_LONG_SIDE || shortSide < MIN_IMAGE_SHORT_SIDE) {
+    throw new Error(`Image must be at least ${MIN_IMAGE_LONG_SIDE}px on the longest side and ${MIN_IMAGE_SHORT_SIDE}px on the shortest side (received ${width}x${height}).`);
+  }
+  
+// Strip metadata (EXIF) by re-encoding via sharp when available; ignore failure gracefully
   let cleanBuf: any = buf as any;
-  try {
-    const fmt = extFromMagic?.slice(1) || 'jpeg';
-    const img = sharp(buf as any, { failOn: 'none' } as any);
-    if (fmt === 'png') cleanBuf = await (img.png({ compressionLevel: 9 }).toBuffer() as any);
-    else if (fmt === 'webp') cleanBuf = await (img.webp({ quality: 90 }).toBuffer() as any);
-    else if (fmt === 'gif') cleanBuf = await (img.gif().toBuffer() as any);
-    else cleanBuf = await (img.jpeg({ quality: 90 }).toBuffer() as any);
-  } catch {}
+  const sharpLib = await loadSharp();
+  if (sharpLib) {
+    try {
+      const fmt = extFromMagic?.slice(1) || 'jpeg';
+      const img = sharpLib(buf as any, { failOn: 'none' } as any);
+      if (fmt === 'png') cleanBuf = await (img.png({ compressionLevel: 9 }).toBuffer() as any);
+      else if (fmt === 'webp') cleanBuf = await (img.webp({ quality: 90 }).toBuffer() as any);
+      else if (fmt === 'gif') cleanBuf = await (img.gif().toBuffer() as any);
+      else cleanBuf = await (img.jpeg({ quality: 90 }).toBuffer() as any);
+    } catch {}
+  }
   const ext = extFromMagic || (type === "image/jpeg" ? ".jpg" : type === "image/png" ? ".png" : type === "image/webp" ? ".webp" : type === "image/gif" ? ".gif" : ".bin");
   const stamped = `${Date.now()}_${randomUUID()}${ext}`;
 
