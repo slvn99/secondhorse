@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { useTfhUI } from "@/lib/tfh";
 
 export default function ConfirmDialog({
   open,
@@ -19,9 +20,24 @@ export default function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { pushOverlay, popOverlay } = useTfhUI();
+  const wasOpen = useRef(false);
+
   useEffect(() => {
-    try { window.dispatchEvent(new CustomEvent('tfh:overlay', { detail: { open } })); } catch {}
-  }, [open]);
+    if (open && !wasOpen.current) {
+      pushOverlay();
+      wasOpen.current = true;
+    } else if (!open && wasOpen.current) {
+      popOverlay();
+      wasOpen.current = false;
+    }
+    return () => {
+      if (wasOpen.current) {
+        popOverlay();
+        wasOpen.current = false;
+      }
+    };
+  }, [open, pushOverlay, popOverlay]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {

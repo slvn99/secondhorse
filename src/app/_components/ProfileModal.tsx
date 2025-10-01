@@ -4,9 +4,11 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import type { Horse } from "@/lib/horses";
 import ConfirmDialog from "./ConfirmDialog";
+import { useTfhUI } from "@/lib/tfh";
 
 export default function ProfileModal({ horse, onClose, onRemove }: { horse: Horse; onClose: () => void; onRemove?: (name: string) => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { pushOverlay, popOverlay } = useTfhUI();
   const gallery = useMemo(() => {
     const arr = Array.isArray(horse.photos) && horse.photos.length ? horse.photos : [horse.image];
     return arr.filter((u): u is string => typeof u === 'string' && u.length > 0);
@@ -28,9 +30,9 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
     else if (dx < -threshold) nextPhoto();
   };
   useEffect(() => {
-    try { window.dispatchEvent(new CustomEvent('tfh:overlay', { detail: { open: true } })); } catch {}
-    return () => { try { window.dispatchEvent(new CustomEvent('tfh:overlay', { detail: { open: false } })); } catch {} };
-  }, []);
+    pushOverlay();
+    return () => popOverlay();
+  }, [pushOverlay, popOverlay]);
 
   return (
     <div className="fixed inset-0 z-[1300]">

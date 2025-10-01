@@ -5,7 +5,7 @@ import Image from "next/image";
 import clsx from "clsx";
 import { horses as allHorses } from "@/lib/horses";
 import type { Horse } from "@/lib/horses";
-import { TFH_EVENTS, TFH_STORAGE, scoreForName } from "@/lib/tfh";
+import { useSeed, useTfhUI, scoreForName } from "@/lib/tfh";
 
 export default function HorseSwiper({
   onRate,
@@ -37,11 +37,8 @@ export default function HorseSwiper({
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const baseList = horses && horses.length > 0 ? horses : allHorses;
   const [deck, setDeck] = useState(baseList);
-
-  const [seed, setSeed] = useState<string | null>(null);
-
-  useEffect(() => { try { let s = localStorage.getItem("tfh_seed"); if (!s) { s = Math.random().toString(36).slice(2); localStorage.setItem("tfh_seed", s); } setSeed(s); } catch { setSeed("default"); } }, []);
-  useEffect(() => { const onReset = () => { let s = Math.random().toString(36).slice(2); try { localStorage.setItem("tfh_seed", s); } catch {} setSeed(s); }; window.addEventListener("tfh:reset", onReset as EventListener); return () => window.removeEventListener("tfh:reset", onReset as EventListener); }, []);
+  const { openFilters, resetApp } = useTfhUI();
+  const [seed] = useSeed();
   useEffect(() => {
     if (disableShuffle) { setDeck(baseList); return; }
     if (!seed) { setDeck(baseList); return; }
@@ -144,18 +141,10 @@ export default function HorseSwiper({
         <h2 className="text-2xl font-bold">No more horses</h2>
         <p className="text-sm text-gray-300">Looks like you’ve reached the end. Try widening your filters, reshuffling the deck, or add a new profile.</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <button type="button" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800">Open Filters</button>
+          <button type="button" onClick={openFilters} className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800">Open Filters</button>
           <button
             type="button"
-            onClick={() => {
-              try {
-                localStorage.setItem(TFH_STORAGE.INDEX, "0");
-                localStorage.removeItem(TFH_STORAGE.SEED);
-                localStorage.removeItem(TFH_STORAGE.MATCHES);
-                window.dispatchEvent(new CustomEvent(TFH_EVENTS.MATCHES));
-                window.dispatchEvent(new CustomEvent(TFH_EVENTS.RESET));
-              } catch {}
-            }}
+            onClick={resetApp}
             className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800"
           >
             Reset app

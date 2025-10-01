@@ -1,36 +1,28 @@
 "use client";
 
 import React from "react";
-import { useEffect, useState } from "react";
-import { useTfhFilters, TFH_EVENTS, TFH_STORAGE, type GenderFilter } from "@/lib/tfh";
+import { useEffect } from "react";
+import { useTfhFilters, useTfhUI, type GenderFilter } from "@/lib/tfh";
 
 export default function FiltersModal() {
-  const [open, setOpen] = useState(false);
   const { gender, setGender, minAge, setMinAge, maxAge, setMaxAge, clearFilters } = useTfhFilters();
+  const { filtersOpen, closeFilters, resetApp } = useTfhUI();
 
   useEffect(() => {
-    const onOpen = () => setOpen(true);
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    window.addEventListener(TFH_EVENTS.OPEN_FILTERS, onOpen as EventListener);
-    window.addEventListener("keydown", onEsc);
-    return () => {
-      window.removeEventListener(TFH_EVENTS.OPEN_FILTERS, onOpen as EventListener);
-      window.removeEventListener("keydown", onEsc);
+    if (!filtersOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeFilters();
     };
-  }, []);
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [filtersOpen, closeFilters]);
 
-  if (!open) return null;
+  if (!filtersOpen) return null;
 
-  const commitClose = () => setOpen(false);
-  const resetApp = () => {
-    try {
-      localStorage.setItem(TFH_STORAGE.INDEX, "0");
-      localStorage.removeItem(TFH_STORAGE.SEED);
-      localStorage.removeItem(TFH_STORAGE.MATCHES);
-      window.dispatchEvent(new CustomEvent(TFH_EVENTS.MATCHES));
-      window.dispatchEvent(new CustomEvent(TFH_EVENTS.RESET));
-    } catch {}
-    setOpen(false);
+  const commitClose = () => closeFilters();
+  const handleResetApp = () => {
+    resetApp();
+    closeFilters();
   };
 
   return (
@@ -89,7 +81,7 @@ export default function FiltersModal() {
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between gap-2">
-            <button type="button" onClick={resetApp} className="text-xs sm:text-sm rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 hover:bg-neutral-800">Reset app</button>
+            <button type="button" onClick={handleResetApp} className="text-xs sm:text-sm rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 hover:bg-neutral-800">Reset app</button>
             <div className="flex items-center gap-2">
               <button type="button" onClick={clearFilters} className="text-xs sm:text-sm rounded border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 hover:bg-neutral-800">Clear filters</button>
               <button type="button" onClick={commitClose} className="text-xs sm:text-sm rounded bg-yellow-500 text-black px-3 py-1.5 hover:bg-yellow-400">Done</button>

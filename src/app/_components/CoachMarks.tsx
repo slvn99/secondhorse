@@ -10,9 +10,6 @@ export default function CoachMarks() {
       const seen = localStorage.getItem("tfh_tips_ok");
       if (!seen) setOpen(true);
     } catch {}
-    const onShow = () => setOpen(true);
-    window.addEventListener("tfh:show-tips", onShow as EventListener);
-    return () => window.removeEventListener("tfh:show-tips", onShow as EventListener);
   }, []);
 
   if (!open) return null;
@@ -43,4 +40,3 @@ export default function CoachMarks() {
     </div>
   );
 }
-

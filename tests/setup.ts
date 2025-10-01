@@ -2,7 +2,7 @@ import React from 'react';
 import { vi } from 'vitest';
 import { act } from 'react';
 import { render as rtlRender, cleanup } from '@testing-library/react';
-import { TFH_STORAGE } from '@/lib/tfh';
+import { TfhProvider, TFH_STORAGE } from '@/lib/tfh';
 
 // Mock next/image to a plain img for DOM/jest-style testing
 vi.mock('next/image', () => {
@@ -14,7 +14,7 @@ vi.mock('next/image', () => {
 
 // Render helper backed by Testing Library
 export function renderElement(el: React.ReactElement) {
-  const r = rtlRender(el);
+  const r = rtlRender(React.createElement(TfhProvider, null, el));
   return {
     container: r.container,
     root: { unmount: r.unmount },

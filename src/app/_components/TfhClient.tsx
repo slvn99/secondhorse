@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState, useEffect } from "react";
 import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
-import { useTfhMatches, useDeckIndex, useTfhFilters, TFH_EVENTS, shouldMatchFor, TFH_STORAGE, stableIdForName, scoreForName } from "@/lib/tfh";
+import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, TFH_STORAGE } from "@/lib/tfh";
 import FiltersModal from "./FiltersModal";
 import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
@@ -14,6 +14,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   // Ensure every horse has an id (prefer DB id, else derive a stable hash from name)
   const withIds = useMemo(() => baseList.map((h) => (h.id ? h : ({ ...h, id: `l_${stableIdForName(h.name)}` } as any))), [baseList]);
   const { matches, addMatch, removeMatch } = useTfhMatches(baseList);
+  const { openFilters, overlayActive, toggleProjectInfo, resetCounter } = useTfhUI();
   const lastAction = useRef<{ horse: Horse; liked: boolean } | null>(null);
   const [undoToastOpen, setUndoToastOpen] = useState<string | null>(null);
   const [hasActedThisSession, setHasActedThisSession] = useState(false);
@@ -31,7 +32,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
   }, []);
 
-  const { gender, minAge, maxAge, clearFilters, setGender, setMinAge, setMaxAge } = useTfhFilters();
+  const { gender, minAge, maxAge, clearFilters } = useTfhFilters();
   const [mounted, setMounted] = useState(false);
   const [kbHint, setKbHint] = useState<boolean>(false);
   useEffect(() => {
@@ -49,17 +50,12 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   const [index, setIndex] = useDeckIndex(Math.max(0, filtered.length - 1));
 
   useEffect(() => {
-    const onReset = () => {
-      setIndex(0);
-      setTab("browse");
-    };
-    window.addEventListener(TFH_EVENTS.RESET, onReset as EventListener);
-    return () => window.removeEventListener(TFH_EVENTS.RESET, onReset as EventListener);
-  }, [setIndex]);
+    if (resetCounter === 0) return;
+    setIndex(0);
+    setTab("browse");
+  }, [resetCounter, setIndex]);
 
   const swiperControls = useRef<{ like: () => void; dislike: () => void; canAct: () => boolean } | null>(null);
-  const [pendingOpen, setPendingOpen] = useState<{ id?: string; name?: string } | null>(null);
-  const [overlayOpen, setOverlayOpen] = useState(false);
 
   // Keyboard controls: Left/Right = dislike/like, Z = undo
   useEffect(() => {
@@ -92,7 +88,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     try {
       const sp = new URLSearchParams(window.location.search);
       if (sp.get("id") || sp.get("p") || sp.get("profile")) {
-        localStorage.removeItem("tfh_index");
+        localStorage.removeItem(TFH_STORAGE.INDEX);
       }
     } catch {}
   }, []);
@@ -110,7 +106,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         if (idx >= 0) {
           // Defer to win over any localStorage index restoration
           setTimeout(() => setIndex(idx), 0);
-          try { localStorage.setItem("tfh_index", String(idx)); } catch {}
+          try { localStorage.setItem(TFH_STORAGE.INDEX, String(idx)); } catch {}
           didInitFromQuery.current = true;
           return;
         }
@@ -134,47 +130,6 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       window.history.replaceState({}, "", u.toString());
     } catch {}
   }, [index, filtered]);
-
-  // Listen for open-profile request and store target id
-  useEffect(() => {
-    const onOpen = (e: Event) => {
-      const detail = (e as CustomEvent<{ id?: string; name?: string }>).detail;
-      const targetId = detail?.id || (detail?.name ? `l_${stableIdForName(detail.name)}` : undefined);
-      if (!targetId && !detail?.name) return;
-      setTab("browse");
-      setPendingOpen({ id: targetId, name: detail?.name });
-    };
-    window.addEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
-    return () => window.removeEventListener(TFH_EVENTS.OPEN_PROFILE, onOpen as EventListener);
-  }, []);
-
-  // Resolve pending open to the correct shuffled deck index; widen filters if needed
-  useEffect(() => {
-    if (!pendingOpen) return;
-    const seed = (() => { try { return localStorage.getItem(TFH_STORAGE.SEED) || "default"; } catch { return "default"; } })();
-
-    const tryResolve = (list: Horse[]) => {
-      const deckSorted = [...list].sort((a, b) => scoreForName((a as any).name, seed) - scoreForName((b as any).name, seed));
-      const idx = deckSorted.findIndex((h) => (h as any).id === pendingOpen?.id || h.name === pendingOpen?.name);
-      if (idx >= 0) { setIndex(idx); setPendingOpen(null); return true; }
-      return false;
-    };
-
-    // Try within current filters first
-    if (tryResolve(filtered)) return;
-    // Widen filters and try against full list
-    setGender("All"); setMinAge(""); setMaxAge("");
-    setTimeout(() => { tryResolve(withIds); }, 0);
-  }, [pendingOpen, filtered, withIds, setGender, setMinAge, setMaxAge, setIndex]);
-
-  // Listen for overlay open/close to hide mobile navbar when modals are shown
-  useEffect(() => {
-    const onOverlay = (e: Event) => {
-      try { setOverlayOpen(!!(e as CustomEvent<{ open: boolean }>).detail?.open); } catch { setOverlayOpen(false); }
-    };
-    window.addEventListener('tfh:overlay', onOverlay as EventListener);
-    return () => window.removeEventListener('tfh:overlay', onOverlay as EventListener);
-  }, []);
 
   // Restore last action on mount (for persisted undo)
   useEffect(() => {
@@ -274,7 +229,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           )}
         </div>
         {/* Mobile bottom navbar */}
-        {!overlayOpen && (
+        {!overlayActive && (
         <div className="md:hidden">
           <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
             <div className="grid grid-cols-5 gap-2">
@@ -296,11 +251,11 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 </span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Matches{matches.length ? ` (${matches.length})` : ""}</span>
               </button>
-              <button type="button" aria-label="Open filters" title="Filters" onClick={() => { try { window.dispatchEvent(new CustomEvent(TFH_EVENTS.OPEN_FILTERS)); } catch {} }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
+              <button type="button" aria-label="Open filters" title="Filters" onClick={openFilters} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 0 1 4.5 3h15a1.5 1.5 0 0 1 1.2 2.4l-6.3 8.4v4.35a1.5 1.5 0 0 1-.87 1.36l-3 1.5A1.5 1.5 0 0 1 8 19.5v-6.21L3.3 5.4A1.5 1.5 0 0 1 3 4.5z" clipRule="evenodd" /></svg>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Filters</span>
               </button>
-              <button type="button" aria-label="Project info" title="Project info" onClick={() => { try { window.dispatchEvent(new CustomEvent("tfh:toggle-project-info")); } catch {} }} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
+              <button type="button" aria-label="Project info" title="Project info" onClick={toggleProjectInfo} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <span aria-hidden className="text-base">ℹ️</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Info</span>
               </button>

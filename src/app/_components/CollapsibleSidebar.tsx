@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useTfhUI } from "@/lib/tfh";
 
 type CollapsibleSidebarProps = {
   linkUrl: string;
@@ -22,29 +23,16 @@ export default function CollapsibleSidebar({
   footer,
   hideMobileToggle = false,
 }: CollapsibleSidebarProps) {
-  const [collapsed, setCollapsed] = React.useState(true);
+  const { projectInfoOpen, setProjectInfoOpen } = useTfhUI();
+  const collapsed = !projectInfoOpen;
+
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       if (window.matchMedia && window.matchMedia("(min-width: 768px)").matches) {
-        setCollapsed(false);
+        setProjectInfoOpen(true);
       }
     }
-  }, []);
-
-  // Allow external toggling via CustomEvents
-  React.useEffect(() => {
-    const onToggle = () => setCollapsed((v) => !v);
-    const onOpen = () => setCollapsed(false);
-    const onClose = () => setCollapsed(true);
-    window.addEventListener("tfh:toggle-project-info", onToggle as EventListener);
-    window.addEventListener("tfh:open-project-info", onOpen as EventListener);
-    window.addEventListener("tfh:close-project-info", onClose as EventListener);
-    return () => {
-      window.removeEventListener("tfh:toggle-project-info", onToggle as EventListener);
-      window.removeEventListener("tfh:open-project-info", onOpen as EventListener);
-      window.removeEventListener("tfh:close-project-info", onClose as EventListener);
-    };
-  }, []);
+  }, [setProjectInfoOpen]);
 
   return (
     <>
@@ -70,7 +58,7 @@ export default function CollapsibleSidebar({
             <button
               type="button"
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              onClick={() => setCollapsed((v) => !v)}
+              onClick={() => setProjectInfoOpen(!projectInfoOpen)}
               className="rounded border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
             >
               {collapsed ? "<" : ">"}
@@ -125,7 +113,7 @@ export default function CollapsibleSidebar({
         <button
           type="button"
           aria-label="Open project info"
-          onClick={() => setCollapsed(false)}
+          onClick={() => setProjectInfoOpen(true)}
           className="md:hidden fixed bottom-4 right-4 z-[1000] rounded-full border border-neutral-700 bg-neutral-900/90 px-4 py-2 text-sm text-neutral-100 shadow-lg backdrop-blur hover:bg-neutral-800"
         >
           Project info
@@ -136,7 +124,7 @@ export default function CollapsibleSidebar({
       {!collapsed && (
         <div
           className="md:hidden fixed left-0 right-0 bottom-0 top-0 z-40 bg-black/50"
-          onClick={() => setCollapsed(true)}
+          onClick={() => setProjectInfoOpen(false)}
         />
       )}
 
@@ -155,7 +143,7 @@ export default function CollapsibleSidebar({
             <button
               type="button"
               aria-label="Close project info"
-              onClick={() => setCollapsed(true)}
+              onClick={() => setProjectInfoOpen(false)}
               className="rounded border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-700"
             >
               Close

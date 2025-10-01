@@ -3,16 +3,22 @@
 import React from "react";
 import Image from "next/image";
 import { horses as allHorses } from "@/lib/horses";
-import { useTfhMatches, TFH_EVENTS } from "@/lib/tfh";
+import { useTfhMatches, useTfhUI } from "@/lib/tfh";
 import type { Horse } from "@/lib/horses";
 import ProfileModal from "./ProfileModal";
 import ConfirmDialog from "./ConfirmDialog";
 
 export default function MatchesSidebar() {
   const { matches, removeMatch } = useTfhMatches(allHorses);
+  const { openFilters } = useTfhUI();
   const [collapsed, setCollapsed] = React.useState(false);
   const [selectedHorse, setSelectedHorse] = React.useState<Horse | null>(null);
   const [confirmName, setConfirmName] = React.useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const shareProfile = async (name: string) => {
     try {
@@ -57,7 +63,7 @@ export default function MatchesSidebar() {
           {collapsed ? null : (
             <div className="flex items-center gap-2 min-w-0">
               <span className="truncate text-sm font-medium text-neutral-200">Matches</span>
-              {matches.length > 0 && (
+              {isHydrated && matches.length > 0 && (
                 <span className="relative inline-flex items-center justify-center">
                   <span
                     className="absolute inset-0 rounded-full bg-amber-400 opacity-60 animate-ping"
@@ -76,7 +82,7 @@ export default function MatchesSidebar() {
           {collapsed && (
             <div className="flex items-center justify-center gap-1 mt-1">
               <span aria-hidden className="text-sm">❤️</span>
-              {matches.length > 0 && (
+              {isHydrated && matches.length > 0 && (
                 <span
                   className="relative min-w-[0.8rem] h-[0.8rem] px-[2px] rounded-full bg-amber-400 text-black text-[9px] font-semibold leading-[0.8rem] text-center ring-1 ring-black/50 shadow"
                   aria-label={`${matches.length} matches`}
@@ -92,11 +98,7 @@ export default function MatchesSidebar() {
               type="button"
               aria-label="Open filters"
               title="Filters"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("tfh:open-filters"));
-                }
-              }}
+              onClick={openFilters}
               className="inline-flex items-center justify-center rounded border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs text-neutral-100 hover:bg-neutral-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
