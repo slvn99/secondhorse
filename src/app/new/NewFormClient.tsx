@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 type Notice = {
@@ -837,6 +838,8 @@ function PhotoField({
 }: PhotoFieldProps) {
   const [dragActive, setDragActive] = useState(false);
 
+  const previewSrc = state.previewUrl || state.url;
+
   const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files.length > 0 ? event.target.files[0] : null;
     onFileChange(index, file);
@@ -862,13 +865,15 @@ function PhotoField({
         onDrop={(event) => { setDragActive(false); onDrop(index, event); }}
         className={`mt-2 aspect-[4/3] w-full overflow-hidden rounded-md border border-neutral-800 bg-neutral-950/60 flex items-center justify-center relative transition ${dragActive ? "ring-2 ring-yellow-400/70" : ""}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {(state.previewUrl || state.url) ? (
-          <img
+        {previewSrc ? (
+          <Image
             id={`tfh-photo-prev-${index}`}
             alt={`Preview ${index + 1}`}
-            src={(state.previewUrl || state.url) as string}
-            className="max-h-full max-w-full object-contain transition-opacity duration-200 opacity-100"
+            src={previewSrc as string}
+            fill
+            sizes="100vw"
+            className="object-contain transition-opacity duration-200 opacity-100"
+            unoptimized
           />
         ) : null}
         <div id={`tfh-drop-overlay-${index}`} className={`pointer-events-none absolute inset-0 ${dragActive ? "flex" : "hidden"} items-center justify-center text-xs text-neutral-200 bg-black/30`}>
@@ -908,3 +913,4 @@ function PhotoField({
     </div>
   );
 }
+

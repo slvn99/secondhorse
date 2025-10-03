@@ -473,13 +473,14 @@ export function useDeckIndex(max: number) {
 
 export function useSeed(): [string | null, () => string] {
   const { seed } = useTfhContext();
+  const { ensureSeed, regenerateSeed, seedRevision } = seed;
   const [value, setValue] = useState<string | null>(null);
 
   useEffect(() => {
-    setValue(seed.ensureSeed());
-  }, [seed.ensureSeed, seed.seedRevision]);
+    setValue(ensureSeed());
+  }, [ensureSeed, seedRevision]);
 
-  const regenerate = useCallback(() => seed.regenerateSeed(), [seed]);
+  const regenerate = useCallback(() => regenerateSeed(), [regenerateSeed]);
 
   return [value, regenerate];
 }
