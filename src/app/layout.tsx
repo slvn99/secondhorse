@@ -12,6 +12,9 @@ import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import { TfhProvider } from "@/lib/tfh";
 import styles from "./tinder-layout.module.css";
 import { Analytics } from "@vercel/analytics/react";
+import { resolveBaseUrl } from "./_lib/baseUrl";
+
+const siteOrigin = resolveBaseUrl();
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const created = "2025-02-25"; // visible creation date label
@@ -118,13 +121,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(siteOrigin),
+  alternates: {
+    canonical: "/",
+  },
   title: {
     default: "Second Horse Dating",
-    template: "%s – Second Horse Dating",
+    template: "%s | Second Horse Dating",
   },
   description:
-    "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+    "Second Horse Dating - Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
   keywords: [
     "second horse dating",
     "tinder for horses",
@@ -138,18 +144,18 @@ export const metadata: Metadata = {
     siteName: "Second Horse Dating",
     title: "Second Horse Dating",
     description:
-      "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+      "Second Horse Dating - Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
     images: [
-      { url: "/TFH/tfh-og-image.png", width: 1200, height: 630, alt: "Second Horse Dating – swipe horse profiles" },
+      { url: `${siteOrigin}/TFH/tfh-og-image.png`, width: 1200, height: 630, alt: "Second Horse Dating - swipe horse profiles" },
     ],
-    url: "/",
+    url: siteOrigin,
   },
   twitter: {
     card: "summary_large_image",
     title: "Second Horse Dating",
     description:
-      "Second Horse Dating – Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
-    images: ["/TFH/tfh-og-image.png"],
+      "Second Horse Dating - Saddle up! Swipe through horse profiles and find your perfect pasture partner.",
+    images: [`${siteOrigin}/TFH/tfh-og-image.png`],
   },
   icons: {
     icon: "/favicon.png",

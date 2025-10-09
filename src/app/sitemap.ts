@@ -12,25 +12,49 @@ type RouteInfo = {
   lastModified?: Date;
 };
 
-const appDirectory = path.join(process.cwd(), 'src', 'app');
+const FALLBACK_ROUTES: RouteInfo[] = [
+  { path: '/' },
+  { path: '/new' },
+  { path: '/privacy' },
+  { path: '/trademark-and-parody' },
+];
+
+const DIRECTORY_CANDIDATES = [
+  path.join(process.cwd(), 'src', 'app'),
+  path.join(process.cwd(), '.next', 'server', 'app'),
+];
+
+async function tryReadDir(dir: string) {
+  try {
+    return await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+}
 
 async function collectStaticRoutes(dir: string, segments: string[] = []): Promise<RouteInfo[]> {
-  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const entries = await tryReadDir(dir);
+  if (!entries) return [];
+
   const routes: RouteInfo[] = [];
 
   const pageFile = entries.find((entry) => entry.isFile() && /^page\.(tsx|ts|jsx|js|mdx)$/.test(entry.name));
   if (pageFile) {
-    const pagePath = path.join(dir, pageFile.name);
-    const stats = await fs.stat(pagePath);
-    const routePath = segments.length ? `/${segments.join('/')}` : '/';
-    routes.push({ path: routePath, lastModified: stats.mtime });
+    try {
+      const pagePath = path.join(dir, pageFile.name);
+      const stats = await fs.stat(pagePath);
+      const routePath = segments.length ? `/${segments.join('/')}` : '/';
+      routes.push({ path: routePath, lastModified: stats.mtime });
+    } catch {
+      // ignore stat/read issues and continue crawling
+    }
   }
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     const name = entry.name;
     if (name === 'api' || name.startsWith('_') || name.startsWith('@')) continue;
-    if (name.startsWith('[')) continue;
+    if (name.startsWith('[') || name.includes('.')) continue;
 
     const nextDir = path.join(dir, name);
     const nextSegments = name.startsWith('(') && name.endsWith(')') ? segments : [...segments, name];
@@ -40,9 +64,25 @@ async function collectStaticRoutes(dir: string, segments: string[] = []): Promis
   return routes;
 }
 
+async function resolveStaticRoutes(): Promise<RouteInfo[]> {
+  for (const candidate of DIRECTORY_CANDIDATES) {
+    try {
+      const stats = await fs.stat(candidate);
+      if (!stats.isDirectory()) continue;
+    } catch {
+      continue;
+    }
+
+    const routes = await collectStaticRoutes(candidate);
+    if (routes.length) return routes;
+  }
+
+  return FALLBACK_ROUTES;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = resolveBaseUrl();
-  const staticRoutes = await collectStaticRoutes(appDirectory);
+  const staticRoutes = await resolveStaticRoutes();
 
   const routeMap = new Map<string, RouteInfo>();
   for (const route of staticRoutes) {
