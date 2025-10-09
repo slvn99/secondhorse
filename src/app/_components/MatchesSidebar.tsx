@@ -112,40 +112,43 @@ export default function MatchesSidebar() {
           <div className="flex-1" />
         ) : (
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-            {matches.length === 0 && (
+            {!isHydrated ? (
+              <p className="text-xs text-neutral-500">Loading matches...</p>
+            ) : matches.length === 0 ? (
               <p className="text-xs text-neutral-400">No matches yet. Start discovering!</p>
-            )}
-            {matches.map((horse) => (
-              <div key={horse.name} className="group flex w-full items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 hover:border-neutral-600">
-                <button
-                  type="button"
-                  onClick={() => setSelectedHorse(horse)}
-                  className="flex items-center gap-3 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 ring-yellow-400/60 flex-1"
-                  title={`${horse.breed} • ${horse.location}`}
-                >
-                  <div className="w-20 h-20 rounded-md overflow-hidden bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Image src={horse.image} alt={`Photo of ${horse.name}`} width={80} height={80} className="object-cover w-20 h-20" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-neutral-200 truncate">{horse.name}, {horse.age}</p>
-                    <p className="text-xs text-neutral-400 truncate">{horse.breed} • {horse.gender} • {horse.heightCm} cm</p>
-                    <p className="text-xs text-neutral-400 truncate">{horse.location}</p>
-                    <span className="mt-0.5 inline-block text-[11px] text-neutral-300 underline">View full profile</span>
-                  </div>
-                </button>
-                <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                  <button type="button" onClick={() => shareProfile(horse.name)} title="Share profile" aria-label="Share profile" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                    </svg>
+            ) : (
+              matches.map((horse) => (
+                <div key={horse.name} className="group flex w-full items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/60 p-3 hover:border-neutral-600">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedHorse(horse)}
+                    className="flex items-center gap-3 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 ring-yellow-400/60 flex-1"
+                    title={`${horse.breed} • ${horse.location}`}
+                  >
+                    <div className="w-20 h-20 rounded-md overflow-hidden bg-neutral-800 flex items-center justify-center shrink-0">
+                      <Image src={horse.image} alt={`Photo of ${horse.name}`} width={80} height={80} className="object-cover w-20 h-20" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-neutral-200 truncate">{horse.name}, {horse.age}</p>
+                      <p className="text-xs text-neutral-400 truncate">{horse.breed} • {horse.gender} • {horse.heightCm} cm</p>
+                      <p className="text-xs text-neutral-400 truncate">{horse.location}</p>
+                      <span className="mt-0.5 inline-block text-[11px] text-neutral-300 underline">View full profile</span>
+                    </div>
                   </button>
-                  <button type="button" onClick={() => setConfirmName(horse.name)} title="Unmatch" aria-label="Unmatch" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-red-300 hover:text-red-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onClick={() => shareProfile(horse.name)} title="Share profile" aria-label="Share profile" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                      </svg>
+                    </button>
+                    <button type="button" onClick={() => setConfirmName(horse.name)} title="Unmatch" aria-label="Unmatch" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-red-300 hover:text-red-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
         {/* Footer action area */}
