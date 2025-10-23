@@ -72,6 +72,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <p className="mt-2 text-neutral-200 text-xs">
                 Find your next riding companion by swiping through the profiles below.
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href="/leaderboard" className="inline-flex items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900/70 px-3 py-1.5 text-xs text-neutral-200 hover:border-neutral-600 hover:text-white">
+                  View leaderboard
+                </a>
+              </div>
             </div>
             <p className="text-xs leading-relaxed">
               Second Horse Dating is a small demo. It&#39;s for me to fiddle around with AI code generation and the pipeline I&#39;ve created for it.

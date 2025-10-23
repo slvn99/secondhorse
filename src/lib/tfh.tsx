@@ -11,6 +11,7 @@ import React, {
   useState,
 } from "react";
 import type { Horse } from "@/lib/horses";
+import { stableIdForName } from "@/lib/profileIds";
 
 export const TFH_STORAGE = {
   MATCHES: "tfh_matches",
@@ -539,10 +540,4 @@ export function shouldMatchFor(name: string, threshold = 0.6): boolean {
 }
 
 // Stable ID derivation for local entries (FNV-1a 32-bit)
-export function stableIdForName(name: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < name.length; i++) {
-    h = (h ^ name.charCodeAt(i)) * 16777619;
-  }
-  return (h >>> 0).toString(16);
-}
+export { stableIdForName } from "@/lib/profileIds";

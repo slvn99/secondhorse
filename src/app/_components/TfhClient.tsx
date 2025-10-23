@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
+import Link from "next/link";
 import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
@@ -8,6 +9,7 @@ import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, 
 import FiltersModal from "./FiltersModal";
 import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
+import { useVoteQueue } from "@/app/_hooks/useVoteQueue";
 
 export default function TfhClient({ horses }: { horses: Horse[] }) {
   const baseList = useMemo(() => horses ?? [], [horses]);
@@ -18,6 +20,9 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   const lastAction = useRef<{ horse: Horse; liked: boolean } | null>(null);
   const [undoToastOpen, setUndoToastOpen] = useState<string | null>(null);
   const [hasActedThisSession, setHasActedThisSession] = useState(false);
+  const { queueVote, lastError, clearError } = useVoteQueue();
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const [voteErrorKey, setVoteErrorKey] = useState(0);
   const onRate = (h: Horse, liked: boolean) => {
     lastAction.current = { horse: h, liked };
     try { localStorage.setItem("tfh_last_action", JSON.stringify({ name: h.name, liked })); } catch {}
@@ -26,6 +31,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       // Always store as liked centrally; derivation to 'matches' is handled in useTfhMatches
       addMatch(h);
     }
+    queueVote(h, liked).catch(() => {});
   };
   const [tab, setTab] = useState<"browse" | "matches">("browse");
   const urlHasTarget = useMemo(() => {
@@ -39,6 +45,17 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     setMounted(true);
     try { setKbHint(!localStorage.getItem("tfh_kb_hint_seen")); } catch { setKbHint(true); }
   }, []);
+  useEffect(() => {
+    if (!lastError) return;
+    setVoteError(lastError);
+    setVoteErrorKey((key) => key + 1);
+    clearError();
+  }, [lastError, clearError]);
+  useEffect(() => {
+    if (!voteError) return;
+    const timer = setTimeout(() => setVoteError(null), 6000);
+    return () => clearTimeout(timer);
+  }, [voteError]);
   const filtered = useMemo(() => {
     return withIds.filter((h) => {
       if (gender !== "All" && h.gender !== gender) return false;
@@ -232,7 +249,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         {!overlayActive && (
         <div className="md:hidden">
           <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               <button type="button" onClick={() => setTab("browse")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "browse" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
                 <span aria-hidden className="text-base">🏇</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Discover</span>
@@ -259,6 +276,10 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 <span aria-hidden className="text-base">ℹ️</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Info</span>
               </button>
+              <Link href="/leaderboard" title="Leaderboard" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
+                <span aria-hidden className="text-base">LB</span>
+                <span className="hidden sm:inline whitespace-nowrap truncate">Leaderboard</span>
+              </Link>
               <a href="/new" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <span aria-hidden className="text-base">➕</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Add</span>
@@ -270,6 +291,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       </div>
       <FiltersModal />
       {undoToastOpen && <Toast message={undoToastOpen} type="info" />}
+      {voteError && <Toast key={`vote-error-${voteErrorKey}`} message={voteError} type="error" />}
       <CoachMarks />
     </div>
   );
