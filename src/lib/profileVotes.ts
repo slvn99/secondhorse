@@ -10,7 +10,13 @@ export type VoteDirection = "like" | "dislike";
 
 export interface SqlClient {
   <T = any>(strings: TemplateStringsArray, ...values: any[]): Promise<T[]>;
-  begin<T>(callback: (sql: SqlClient) => Promise<T>): Promise<T>;
+  begin?<T>(callback: (sql: SqlClient) => Promise<T>): Promise<T>;
+  transaction?<T = unknown>(
+    queriesOrFactory:
+      | Array<Promise<unknown>>
+      | ((sql: SqlClient) => Array<Promise<unknown>>),
+    options?: unknown
+  ): Promise<T>;
 }
 
 export type ProfileVoteTotals = {
@@ -170,12 +176,14 @@ export async function recordProfileVote({
 
   const client = getSqlClient(sql, databaseUrl);
 
-  const totalsRow = await client.begin(async (tx) => {
-    await tx`
+  const runInsertVote = (tx: SqlClient) =>
+    tx`
       INSERT INTO profile_votes (profile_key, direction, created_at)
       VALUES (${normalized.key}, ${direction}, ${createdAt.toISOString()});
     `;
-    const rows = await tx<TotalsRow>`
+
+  const runUpsertTotals = (tx: SqlClient) =>
+    tx<TotalsRow>`
       INSERT INTO profile_vote_totals (
         profile_key,
         likes,
@@ -201,12 +209,38 @@ export async function recordProfileVote({
         updated_at = EXCLUDED.updated_at
       RETURNING profile_key, likes, dislikes, first_vote_at, last_vote_at, updated_at;
     `;
-    const record = rows[0];
-    if (!record) {
-      throw new Error("Failed to persist vote totals");
-    }
-    return record;
-  });
+
+  const clientWithExtras = client as SqlClient & {
+    begin?: SqlClient["begin"];
+    transaction?: SqlClient["transaction"];
+  };
+
+  let totalsRow: TotalsRow | undefined;
+
+  if (typeof clientWithExtras.transaction === "function") {
+    const results = (await clientWithExtras.transaction((tx: SqlClient) => [
+      runInsertVote(tx),
+      runUpsertTotals(tx),
+    ])) as unknown[];
+    const totalsRows = Array.isArray(results) ? (results[1] as TotalsRow[]) : undefined;
+    totalsRow = totalsRows?.[0];
+  } else if (typeof clientWithExtras.begin === "function") {
+    totalsRow = await clientWithExtras.begin(async (tx: SqlClient) => {
+      await runInsertVote(tx);
+      const rows = await runUpsertTotals(tx);
+      const record = rows[0];
+      if (!record) {
+        throw new Error("Failed to persist vote totals");
+      }
+      return record;
+    });
+  } else {
+    throw new Error("SQL client does not support transactional operations");
+  }
+
+  if (!totalsRow) {
+    throw new Error("Failed to persist vote totals");
+  }
 
   const baseTotals = mapTotalsRow(totalsRow);
   return buildProfileVoteTotals(client, normalized, baseTotals, createdAt);

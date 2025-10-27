@@ -59,6 +59,7 @@ export async function POST(request: Request, context: any) {
     const json = await request.json();
     payload = voteRequestSchema.parse(json);
   } catch (error) {
+    console.error("Vote payload parsing failed", error);
     if (error instanceof z.ZodError) {
       return problemJson(400, "Invalid vote payload", {
         issues: error.issues.map((issue) => ({
@@ -104,12 +105,13 @@ export async function POST(request: Request, context: any) {
       });
     }
     const message = error instanceof Error ? error.message : String(error);
+    console.error("Vote persistence error", error);
     if (message.includes("DATABASE_URL")) {
       return problemJson(503, "Vote persistence is not configured");
     }
     if (message.includes("profile id must") || message.includes("seedName")) {
       return problemJson(400, "Invalid profile identifier", { source: identifierSource });
     }
-    return problemJson(500, "Failed to record vote");
+    return problemJson(500, "Failed to record vote", { message });
   }
 }

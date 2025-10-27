@@ -101,6 +101,15 @@ function createFakeSqlClient(options: FakeOptions = {}) {
   }) as SqlClient;
 
   sql.begin = async <T>(callback: (inner: SqlClient) => Promise<T>) => callback(sql);
+  sql.transaction = async (queriesOrFactory: Array<Promise<unknown>> | ((inner: SqlClient) => Array<Promise<unknown>>)) => {
+    const queries =
+      typeof queriesOrFactory === "function" ? queriesOrFactory(sql) : queriesOrFactory;
+    const results: unknown[] = [];
+    for (const query of queries) {
+      results.push(await query);
+    }
+    return results;
+  };
 
   return { sql, totals, profileCreatedAt, votes };
 }
