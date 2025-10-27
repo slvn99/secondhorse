@@ -194,6 +194,9 @@ export default function HorseSwiper({
           href="/leaderboard"
           className="absolute top-4 left-4 z-40 inline-flex items-center gap-1 rounded-full border border-neutral-700 bg-neutral-900/85 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-100 transition hover:bg-neutral-800/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
           title="View leaderboard"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+          onPointerUp={(event) => event.stopPropagation()}
         >
           View leaderboard
         </Link>
