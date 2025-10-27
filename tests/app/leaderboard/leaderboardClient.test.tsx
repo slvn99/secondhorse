@@ -87,6 +87,24 @@ describe("LeaderboardClient", () => {
     });
   });
 
+  it("links to the browse screen for database-backed profiles", () => {
+    render(<LeaderboardClient data={buildResponse()} />);
+    const anchor = screen.getByTitle("View Thunder");
+    expect(anchor.tagName).toBe("A");
+    expect(anchor.getAttribute("href")).toBe("/?id=123");
+  });
+
+  it("links to the browse screen for seed profiles", async () => {
+    render(<LeaderboardClient data={buildResponse()} />);
+    const [dislikesTab] = screen.getAllByRole("tab", { name: "Most Disliked" });
+    fireEvent.click(dislikesTab);
+
+    await waitFor(() => {
+      const anchor = screen.getByTitle("View Grumpy");
+      expect(anchor.getAttribute("href")).toBe("/?p=abc");
+    });
+  });
+
   it("shows empty state when there are no entries", async () => {
     const emptyData: LeaderboardResponse = {
       summary: {
