@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import clsx from "clsx";
 import { horses as allHorses } from "@/lib/horses";
@@ -149,6 +150,12 @@ export default function HorseSwiper({
           >
             Reset app
           </button>
+          <Link
+            href="/leaderboard"
+            className="rounded-lg border border-neutral-700 bg-neutral-900 text-neutral-100 px-3 py-1.5 text-sm hover:bg-neutral-800"
+          >
+            View leaderboard
+          </Link>
           <a href="/new" className="rounded-lg bg-yellow-500 text-black px-3 py-1.5 text-sm font-medium hover:bg-yellow-400">Add Profile</a>
         </div>
       </div>
@@ -183,6 +190,13 @@ export default function HorseSwiper({
         onPointerCancel={onPointerUp}
         style={direction ? undefined : { transform: `translate(${dx}px, ${dy * 0.2}px) rotate(${Math.max(-15, Math.min(15, dx / 12))}deg)`, cursor: dragging ? "grabbing" : "grab", userSelect: "none", touchAction: "none" }}
       >
+        <Link
+          href="/leaderboard"
+          className="absolute top-4 left-4 z-40 inline-flex items-center gap-1 rounded-full border border-neutral-700 bg-neutral-900/85 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-100 transition hover:bg-neutral-800/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
+          title="View leaderboard"
+        >
+          View leaderboard
+        </Link>
         {/* Swipe badges for clarity */}
         <div className="pointer-events-none absolute inset-0 z-30 select-none">
           <div
