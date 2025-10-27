@@ -116,7 +116,7 @@ export async function evaluateVoteGuard({
 
   if (GUARD_CONFIG.profileLimit > 0) {
     const windowIso = new Date(referenceNow.getTime() - GUARD_CONFIG.profileWindowMs).toISOString();
-    const rows = await client<{ count: number | string }>`
+    const rows = await client<{ profile_count: number | string }>`
       SELECT COUNT(*) AS profile_count
       FROM profile_votes
       WHERE client_hash = ${clientHash}
