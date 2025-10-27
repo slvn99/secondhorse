@@ -10,6 +10,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - **Saved matches**: Stored in `localStorage`, with a dedicated Matches view.
 - **Filters**: Gender and age range; persists in `localStorage`.
 - **Deep linking**: URL reflects the current profile; share button copies a direct link.
+- **Leaderboard**: `/leaderboard` exposes community likes/dislikes with summary statistics.
 - **Profile submissions**: `/new` accepts URLs and file uploads (Vercel Blob when configured). Optional hCaptcha in production.
 - **Project info + sidebar**: Collapsible sidebar with project notes and version/date from Git.
 - **Analytics**: Vercel Analytics integrated.
@@ -61,8 +62,10 @@ Second Horse Dating (Tinder‑for‑Horses)
 **Environment Variables**
 - `DATABASE_URL`: Neon Postgres connection string. Enables reading/writing profiles.
 - `BLOB_READ_WRITE_TOKEN` (optional): Enables public image uploads to Vercel Blob on `/new`.
-- `ALLOWED_HOSTS` (optional): Comma‑separated hostnames allowed to submit the form (CSRF guard).
+- `ALLOWED_HOSTS` (optional): Comma-separated hostnames allowed to submit the form (CSRF guard).
 - `HCAPTCHA_SECRET` (optional): When set in production, `/new` requires hCaptcha.
+- `ENABLE_LEADERBOARD` (optional): Feature flag for `/leaderboard` when you want to gate the page during rollout.
+
 - `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
 - `VERCEL_GIT_COMMIT_SHA`/`GITHUB_SHA`/`COMMIT_SHA` (optional): Used for version label in the UI.
 
@@ -76,17 +79,33 @@ Security note: a previously committed `.env.local` has been removed from the rep
   - Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set (public URLs), or
   - Local dev fallback in `public/uploads` when not in production.
 - **Local state**: Matches, filters, and deck index persist in `localStorage`.
+- **Votes**: Global like/dislike counts persist in Postgres. The schema ships in `sql/migrations/20251023_profile_votes.sql`.
+
+**Leaderboard & Vote Persistence**
+- Apply the migration before deploying:
+  ```bash
+  psql "$DATABASE_URL" -f sql/migrations/20251023_profile_votes.sql
+  ```
+- The vote API writes raw events (`profile_votes`) and maintains aggregates (`profile_vote_totals`). Aggregates power `/leaderboard`.
+- To seed sample data locally, you can insert rows manually:
+  ```sql
+  INSERT INTO profile_vote_totals (profile_key, likes, dislikes, first_vote_at, last_vote_at, updated_at)
+  VALUES ('seed:abc123', 5, 2, now() - interval '7 days', now(), now());
+  ```
+  Then run `npm run dev` and visit `http://localhost:3000/leaderboard`.
+- When `ENABLE_LEADERBOARD` is set (see `.env.example`), the UI can be toggled during rollout while APIs remain active.
 
 **Images, Assets, and Security Headers**
 - Remote images are whitelisted in `next.config.ts` (Unsplash, Notion, Vercel Blob, etc.).
 - Rewrites expose TFH assets under stable paths (e.g., `/TFH/...`). Ensure the images in `public/TFH` remain present.
-- Strict headers are configured: CSP, HSTS, X‑Frame‑Options, Referrer‑Policy, Permissions‑Policy.
+- Strict headers are configured: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy.
 
 **Testing**
 - Run all tests: `npm test`
 - Watch mode: `npm run test:watch`
-- Coverage (opt‑in): `npm run coverage` (HTML report in `coverage/`). Coverage is enabled when `COVERAGE=1` is set.
+- Coverage (opt-in): `npm run coverage` (HTML report in `coverage/`). Coverage is enabled when `COVERAGE=1` is set.
 - Target: Keep ≥80% coverage for changed code. Example: `tests/lib/horses.test.ts` validates seed data shape.
+- Leaderboard + vote APIs: use `npm test -- --run tests/app/leaderboard/leaderboardClient.test.tsx tests/app/hooks/useVoteQueue.test.ts tests/app/api/votes.test.ts` to exercise the new feature end-to-end.
 
 **Testing Approach & Patterns**
 - Environment: Vitest with `jsdom` (see `vitest.config.ts`) and project aliases (`@` → `src`).
@@ -131,6 +150,8 @@ Security note: a previously committed `.env.local` has been removed from the rep
 - Performance & UX
   - Audit client bundles for large deps; consider dynamic imports for heavier UI parts.
   - Ensure all interactive elements have accessible names/ARIA and keyboard support; add unit tests for focus/keyboard flows.
+- Tooling & Ops
+  - Add automated migrations runner for the vote tables to avoid manual execution in production.
 
 **Moderation**
 - Profiles are reviewed by a human via: `https://samvannoord.nl/moderation`.

@@ -45,6 +45,8 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     setMounted(true);
     try { setKbHint(!localStorage.getItem("tfh_kb_hint_seen")); } catch { setKbHint(true); }
   }, []);
+  const matchesCount = mounted ? matches.length : 0;
+  const showMatchesBadge = matchesCount > 0;
   useEffect(() => {
     if (!lastError) return;
     setVoteError(lastError);
@@ -257,16 +259,16 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
               <button type="button" onClick={() => setTab("matches")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "matches" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
                 <span className="relative inline-flex">
                   <span aria-hidden className="text-base">❤️</span>
-                  {matches.length > 0 && (
+                  {showMatchesBadge && (
                     <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 inline-flex items-center justify-center">
                       <span className="absolute inset-0 rounded-full bg-amber-400 opacity-60 animate-ping" aria-hidden="true" />
-                      <span className="relative min-w-[0.9rem] h-[0.9rem] px-[2px] rounded-full bg-amber-400 text-black text-[9px] font-semibold leading-[0.9rem] text-center ring-1 ring-black/50 shadow-md" aria-label={`${matches.length} matches`}>
-                        {matches.length}
+                      <span className="relative min-w-[0.9rem] h-[0.9rem] px-[2px] rounded-full bg-amber-400 text-black text-[9px] font-semibold leading-[0.9rem] text-center ring-1 ring-black/50 shadow-md" aria-label={`${matchesCount} matches`}>
+                        {matchesCount}
                       </span>
                     </span>
                   )}
                 </span>
-                <span className="hidden sm:inline whitespace-nowrap truncate">Matches{matches.length ? ` (${matches.length})` : ""}</span>
+                <span className="hidden sm:inline whitespace-nowrap truncate">Matches{matchesCount ? ` (${matchesCount})` : ""}</span>
               </button>
               <button type="button" aria-label="Open filters" title="Filters" onClick={openFilters} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 0 1 4.5 3h15a1.5 1.5 0 0 1 1.2 2.4l-6.3 8.4v4.35a1.5 1.5 0 0 1-.87 1.36l-3 1.5A1.5 1.5 0 0 1 8 19.5v-6.21L3.3 5.4A1.5 1.5 0 0 1 3 4.5z" clipRule="evenodd" /></svg>
