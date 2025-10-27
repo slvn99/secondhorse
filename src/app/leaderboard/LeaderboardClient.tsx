@@ -21,6 +21,19 @@ function formatProfileAge(days: number): string {
   return `${formatNumber(days)} days old`;
 }
 
+function badgeClass(rank: number): string {
+  if (rank === 1) {
+    return "bg-gradient-to-br from-yellow-400 via-yellow-200 to-yellow-500 text-black shadow-lg shadow-yellow-500/20";
+  }
+  if (rank === 2) {
+    return "bg-gradient-to-br from-zinc-200 via-zinc-100 to-zinc-300 text-black shadow-lg shadow-zinc-400/20";
+  }
+  if (rank === 3) {
+    return "bg-gradient-to-br from-amber-600 via-amber-500 to-amber-700 text-white shadow-lg shadow-amber-700/30";
+  }
+  return "bg-gradient-to-br from-pink-500 via-amber-400 to-pink-500 text-black";
+}
+
 function LeaderboardList({ entries, directionLabel }: { entries: LeaderboardEntry[]; directionLabel: string }) {
   if (!entries.length) {
     return (
@@ -37,8 +50,8 @@ function LeaderboardList({ entries, directionLabel }: { entries: LeaderboardEntr
           key={entry.profileKey}
           className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-4 backdrop-blur-sm transition hover:border-neutral-700"
         >
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 via-amber-400 to-pink-500 text-black font-semibold">
+            <div className="flex items-start gap-4">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${badgeClass(entry.rank)}`}>
               {entry.rank}
             </div>
             <div className="flex-1 min-w-0">
