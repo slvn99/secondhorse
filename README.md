@@ -64,6 +64,12 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `BLOB_READ_WRITE_TOKEN` (optional): Enables public image uploads to Vercel Blob on `/new`.
 - `ALLOWED_HOSTS` (optional): Comma-separated hostnames allowed to submit the form (CSRF guard).
 - `HCAPTCHA_SECRET` (optional): When set in production, `/new` requires hCaptcha.
+- **Vote guard tuning (optional)**:
+  - `VOTE_GUARD_SALT`: Secret salt for hashing client identifiers before storing them.
+  - `VOTE_GUARD_MINUTE_LIMIT`: Max votes per client hash within `VOTE_GUARD_MINUTE_WINDOW_MS` (default 15 / 60s).
+  - `VOTE_GUARD_HOURLY_LIMIT`: Max votes per client hash within `VOTE_GUARD_HOURLY_WINDOW_MS` (default 120 / 1h).
+  - `VOTE_GUARD_PROFILE_LIMIT`: Max votes per profile/client hash within `VOTE_GUARD_PROFILE_WINDOW_MS` (default 6 / 24h).
+  - (Advanced) `VOTE_GUARD_MINUTE_WINDOW_MS`, `VOTE_GUARD_HOURLY_WINDOW_MS`, `VOTE_GUARD_PROFILE_WINDOW_MS` override the time windows if you need custom intervals.
 - `ENABLE_LEADERBOARD` (optional): Feature flag for `/leaderboard` when you want to gate the page during rollout.
 
 - `NEXT_PUBLIC_SITE_URL` (optional): Used for absolute metadata base.
@@ -87,6 +93,7 @@ Security note: a previously committed `.env.local` has been removed from the rep
   psql "$DATABASE_URL" -f sql/migrations/20251023_profile_votes.sql
   ```
 - The vote API writes raw events (`profile_votes`) and maintains aggregates (`profile_vote_totals`). Aggregates power `/leaderboard`.
+- Vote guardrails hash the caller’s address, throttle burst voting, and log flagged attempts (`profile_vote_guard_events`). Guard settings are controlled via the `VOTE_GUARD_*` environment variables above.
 - To seed sample data locally, you can insert rows manually:
   ```sql
   INSERT INTO profile_vote_totals (profile_key, likes, dislikes, first_vote_at, last_vote_at, updated_at)

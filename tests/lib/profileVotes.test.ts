@@ -3,6 +3,7 @@ import {
   recordProfileVote,
   fetchProfileVoteTotals,
   profileAgeInDays,
+  recordFlaggedVoteAttempt,
   type SqlClient,
   type VoteDirection,
 } from "@/lib/profileVotes";
@@ -23,7 +24,14 @@ type FakeOptions = {
 function createFakeSqlClient(options: FakeOptions = {}) {
   const totals = new Map<string, TotalsState>();
   const profileCreatedAt = new Map<string, Date>();
-  const votes: Array<{ profileKey: string; direction: VoteDirection; createdAt: Date }> = [];
+  const votes: Array<{
+    profileKey: string;
+    direction: VoteDirection;
+    createdAt: Date;
+    clientHash: string | null;
+    flagged: boolean;
+  }> = [];
+  const guardEvents: Array<{ clientHash: string | null; profileKey: string; reason: string; createdAt: Date }> = [];
 
   for (const [id, value] of Object.entries(options.profileCreatedAt ?? {})) {
     const date = value instanceof Date ? value : new Date(value);
@@ -35,9 +43,20 @@ function createFakeSqlClient(options: FakeOptions = {}) {
   const sql = (async (strings: TemplateStringsArray, ...values: any[]) => {
     const raw = strings.join(" ").replace(/\s+/g, " ").trim();
     if (raw.startsWith("INSERT INTO profile_votes")) {
-      const [profileKey, direction, createdAtIso] = values as [string, VoteDirection, string];
+      const [profileKey, direction, createdAtIso, clientHash] = values as [
+        string,
+        VoteDirection,
+        string,
+        string | null
+      ];
       const createdAt = new Date(createdAtIso);
-      votes.push({ profileKey, direction, createdAt });
+      votes.push({
+        profileKey,
+        direction,
+        createdAt,
+        clientHash: clientHash ?? null,
+        flagged: raw.includes(", true)"),
+      });
       return [];
     }
     if (raw.startsWith("INSERT INTO profile_vote_totals")) {
@@ -97,6 +116,21 @@ function createFakeSqlClient(options: FakeOptions = {}) {
       if (!record) return [];
       return [{ created_at: record.toISOString() }];
     }
+    if (raw.startsWith("INSERT INTO profile_vote_guard_events")) {
+      const [clientHash, profileKey, reason, createdAtIso] = values as [
+        string | null,
+        string,
+        string,
+        string
+      ];
+      guardEvents.push({
+        clientHash: clientHash ?? null,
+        profileKey,
+        reason,
+        createdAt: new Date(createdAtIso),
+      });
+      return [];
+    }
     throw new Error(`Unexpected query in fake SQL client: ${raw}`);
   }) as SqlClient;
 
@@ -111,7 +145,7 @@ function createFakeSqlClient(options: FakeOptions = {}) {
     return results;
   };
 
-  return { sql, totals, profileCreatedAt, votes };
+  return { sql, totals, profileCreatedAt, votes, guardEvents };
 }
 
 describe("profile identifier normalization", () => {
@@ -161,6 +195,7 @@ describe("profile vote persistence helpers", () => {
       direction: "dislike",
       timestamp: dislikeTime,
       sql: fake.sql,
+      clientHash: "hash-1",
     });
 
     expect(second.likes).toBe(1);
@@ -198,6 +233,7 @@ describe("profile vote persistence helpers", () => {
       direction: "dislike",
       timestamp: firstVote,
       sql: fake.sql,
+      clientHash: "hash-seed",
     });
 
     expect(result.profileCreatedAt).toBeNull();
@@ -216,5 +252,32 @@ describe("profile vote persistence helpers", () => {
     expect(totals?.profileAgeDays).toBe(
       profileAgeInDays({ profileCreatedAt: null, firstVoteAt: firstVote, now: totals?.updatedAt ?? firstVote })
     );
+  });
+
+  it("records flagged vote attempts without updating totals", async () => {
+    const seedName = "Guarded Horse";
+    const fake = createFakeSqlClient();
+    const attemptTime = new Date("2025-03-02T10:00:00Z");
+
+    await recordFlaggedVoteAttempt({
+      profile: { seedName },
+      direction: "like",
+      reason: "Too many votes",
+      timestamp: attemptTime,
+      sql: fake.sql,
+      clientHash: "test-hash",
+    });
+
+    expect(fake.votes).toHaveLength(1);
+    expect(fake.votes[0]).toMatchObject({
+      profileKey: expect.stringContaining("seed:"),
+      flagged: true,
+      clientHash: "test-hash",
+    });
+    expect(fake.guardEvents).toHaveLength(1);
+    expect(fake.guardEvents[0].reason).toBe("Too many votes");
+
+    const totals = await fetchProfileVoteTotals({ profile: { seedName }, sql: fake.sql });
+    expect(totals).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ const mockRateLimit = vi.hoisted(() =>
 );
 
 const mockRecordProfileVote = vi.hoisted(() => vi.fn());
+const mockRecordFlaggedVoteAttempt = vi.hoisted(() => vi.fn());
 const mockListTop = vi.hoisted(() => vi.fn());
 const mockFetchSummary = vi.hoisted(() => vi.fn());
 
@@ -21,8 +22,17 @@ vi.mock("@/app/_lib/rateLimit", () => ({
 
 vi.mock("@/lib/profileVotes", () => ({
   recordProfileVote: mockRecordProfileVote,
+  recordFlaggedVoteAttempt: mockRecordFlaggedVoteAttempt,
   listTopProfileVoteTotals: mockListTop,
   fetchVoteSummary: mockFetchSummary,
+}));
+
+const mockEvaluateGuard = vi.hoisted(() => vi.fn(async () => ({ status: "allow" as const })));
+const mockHashClientIdentifier = vi.hoisted(() => vi.fn((value: string | null) => (value ? `hash:${value}` : null)));
+
+vi.mock("@/lib/voteGuard", () => ({
+  evaluateVoteGuard: mockEvaluateGuard,
+  hashClientIdentifier: mockHashClientIdentifier,
 }));
 
 const mockNeon = vi.hoisted(() => vi.fn(() => mockSql));
@@ -42,6 +52,10 @@ beforeEach(() => {
   mockListTop.mockReset();
   mockFetchSummary.mockReset();
   mockNeon.mockClear();
+  mockRecordFlaggedVoteAttempt.mockReset();
+  mockEvaluateGuard.mockReset();
+  mockEvaluateGuard.mockResolvedValue({ status: "allow" });
+  mockHashClientIdentifier.mockClear();
   delete process.env.DATABASE_URL;
 });
 
@@ -76,10 +90,18 @@ describe("POST /api/profiles/[id]/vote", () => {
     });
 
     expect(mockRateLimit).toHaveBeenCalled();
-    expect(mockRecordProfileVote).toHaveBeenCalledWith({
-      profile: { dbId: "123e4567-e89b-12d3-a456-426614174000" },
-      direction: "like",
+    expect(mockHashClientIdentifier).toHaveBeenCalledWith("10.0.0.5");
+    expect(mockEvaluateGuard).toHaveBeenCalledWith({
+      clientHash: "hash:10.0.0.5",
+      profileKey: "db:123e4567-e89b-12d3-a456-426614174000",
     });
+    expect(mockRecordProfileVote).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profile: { dbId: "123e4567-e89b-12d3-a456-426614174000" },
+        direction: "like",
+        clientHash: "hash:10.0.0.5",
+      })
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.totals.likes).toBe(3);

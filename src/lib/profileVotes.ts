@@ -47,6 +47,7 @@ type RecordVoteParams = {
   sql?: SqlClient;
   databaseUrl?: string;
   timestamp?: Date;
+  clientHash?: string | null;
 };
 
 type FetchTotalsParams = {
@@ -164,6 +165,7 @@ export async function recordProfileVote({
   sql,
   databaseUrl,
   timestamp,
+  clientHash,
 }: RecordVoteParams): Promise<ProfileVoteTotals> {
   if (!VALID_DIRECTIONS.includes(direction)) {
     throw new Error(`Unsupported vote direction: ${direction}`);
@@ -178,8 +180,8 @@ export async function recordProfileVote({
 
   const runInsertVote = (tx: SqlClient) =>
     tx`
-      INSERT INTO profile_votes (profile_key, direction, created_at)
-      VALUES (${normalized.key}, ${direction}, ${createdAt.toISOString()});
+      INSERT INTO profile_votes (profile_key, direction, created_at, client_hash, flagged)
+      VALUES (${normalized.key}, ${direction}, ${createdAt.toISOString()}, ${clientHash ?? null}, false);
     `;
 
   const runUpsertTotals = (tx: SqlClient) =>
@@ -244,6 +246,45 @@ export async function recordProfileVote({
 
   const baseTotals = mapTotalsRow(totalsRow);
   return buildProfileVoteTotals(client, normalized, baseTotals, createdAt);
+}
+
+type RecordFlaggedVoteParams = {
+  profile: ProfileIdentifier;
+  direction: VoteDirection;
+  reason: string;
+  clientHash?: string | null;
+  sql?: SqlClient;
+  databaseUrl?: string;
+  timestamp?: Date;
+};
+
+export async function recordFlaggedVoteAttempt({
+  profile,
+  direction,
+  reason,
+  clientHash,
+  sql,
+  databaseUrl,
+  timestamp,
+}: RecordFlaggedVoteParams): Promise<void> {
+  if (!VALID_DIRECTIONS.includes(direction)) {
+    throw new Error(`Unsupported vote direction: ${direction}`);
+  }
+  const normalized = normalizeProfileIdentifier(profile);
+  const createdAt = timestamp ? new Date(timestamp) : new Date();
+  if (Number.isNaN(createdAt.getTime())) {
+    throw new Error("Provided timestamp is invalid");
+  }
+
+  const client = getSqlClient(sql, databaseUrl);
+  await client`
+    INSERT INTO profile_votes (profile_key, direction, created_at, client_hash, flagged)
+    VALUES (${normalized.key}, ${direction}, ${createdAt.toISOString()}, ${clientHash ?? null}, true);
+  `;
+  await client`
+    INSERT INTO profile_vote_guard_events (client_hash, profile_key, reason, created_at)
+    VALUES (${clientHash ?? null}, ${normalized.key}, ${reason}, ${createdAt.toISOString()});
+  `;
 }
 
 export async function fetchProfileVoteTotals({

@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/app/_lib/rateLimit";
-import { recordProfileVote } from "@/lib/profileVotes";
+import { recordFlaggedVoteAttempt, recordProfileVote } from "@/lib/profileVotes";
 import {
   inferProfileIdentifier,
   normalizeProfileIdentifier,
   type ProfileSource,
 } from "@/lib/profileIds";
 import { serializeVoteTotals, type VoteRequestPayload } from "@/lib/voteTypes";
+import { evaluateVoteGuard, hashClientIdentifier } from "@/lib/voteGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,18 +79,40 @@ export async function POST(request: Request, context: any) {
       seedName: payload.seedName,
     });
     const normalized = normalizeProfileIdentifier(identifier);
+    const clientId = clientAddress(request);
+    const clientHash = hashClientIdentifier(clientId);
 
     identifierSource = normalized.source;
 
-    const key = `vote:${normalized.key}:${clientAddress(request)}`;
+    const key = `vote:${normalized.key}:${clientId}`;
     const limiter = rateLimit(key, 5, 60_000);
     if (!limiter.allowed) {
       return problemJson(429, "Too many votes for this profile from your connection");
     }
 
+    const now = new Date();
+    const guardDecision = await evaluateVoteGuard({
+      clientHash,
+      profileKey: normalized.key,
+    });
+    if (guardDecision.status !== "allow") {
+      await recordFlaggedVoteAttempt({
+        profile: identifier,
+        direction: payload.direction,
+        clientHash,
+        reason: guardDecision.reason,
+        timestamp: now,
+      });
+      return problemJson(429, guardDecision.reason, {
+        retryAfterMs: guardDecision.retryAfterMs,
+      });
+    }
+
     const totals = await recordProfileVote({
       profile: identifier,
       direction: payload.direction,
+      clientHash,
+      timestamp: now,
     });
 
     return NextResponse.json({
