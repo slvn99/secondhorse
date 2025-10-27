@@ -49,7 +49,7 @@ function clientAddress(request: NextRequest | Request): string {
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id?: string }> | { id?: string } }
+  { params }: { params: { id?: string } }
 ) {
   const resolved = await Promise.resolve(params);
   const rawId = resolved?.id;
