@@ -224,7 +224,6 @@ export default function HorseSwiper({
         ) : (
           <Image src={gallery[safeIdx] || defaultImg} alt={`Photo of ${horse.name}`} fill sizes="(max-width: 640px) 90vw, (max-width: 768px) 28rem, (max-width: 1024px) 32rem, 36rem" className="object-cover" onLoadingComplete={() => setImgLoaded(true)} />
         )}
-        {!imgLoaded && (<div className="absolute inset-0 bg-neutral-800 animate-pulse" aria-hidden="true" />)}
         {gallery.length > 1 && (
           <>
             <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
