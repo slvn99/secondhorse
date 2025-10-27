@@ -47,12 +47,9 @@ function clientAddress(request: NextRequest | Request): string {
   return "unknown";
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id?: string } }
-) {
-  const resolved = await Promise.resolve(params);
-  const rawId = resolved?.id;
+export async function POST(request: Request, context: any) {
+  const params = await Promise.resolve(context?.params);
+  const rawId = params?.id;
   if (!rawId) {
     return problemJson(404, "Profile not found");
   }
