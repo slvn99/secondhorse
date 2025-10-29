@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { Horse } from "@/lib/horses";
 import HorseSwiper from "./HorseSwiper";
 import MatchesView from "./MatchesView";
+import ProfileModal from "./ProfileModal";
 import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, TFH_STORAGE } from "@/lib/tfh";
 import FiltersModal from "./FiltersModal";
 import CoachMarks from "./CoachMarks";
@@ -34,9 +35,46 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     queueVote(h, liked).catch(() => {});
   };
   const [tab, setTab] = useState<"browse" | "matches">("browse");
+  const [modalEntry, setModalEntry] = useState<{ horse: Horse; profileKey: string } | null>(null);
   const urlHasTarget = useMemo(() => {
     try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
   }, []);
+  const findHorseByProfileKey = useCallback(
+    (profileKey: string): Horse | null => {
+      const key = profileKey.trim().toLowerCase();
+      if (!key) return null;
+      const collections = [withIds, baseList];
+      if (key.startsWith("db:")) {
+        const targetId = key.slice(3);
+        for (const list of collections) {
+          const match = list.find((horse) => (horse.id ?? "").toLowerCase() === targetId);
+          if (match) return match;
+        }
+        return null;
+      }
+      if (key.startsWith("seed:")) {
+        const targetSeed = key.slice(5);
+        for (const list of collections) {
+          const match = list.find((horse) => {
+            const horseId = (horse.id ?? "").toLowerCase();
+            const hashed = stableIdForName(horse.name).toLowerCase();
+            return horseId === targetSeed || horseId === `l_${targetSeed}` || hashed === targetSeed;
+          });
+          if (match) return match;
+        }
+        return null;
+      }
+      for (const list of collections) {
+        const match = list.find(
+          (horse) =>
+            (horse.id ?? "").toLowerCase() === key || horse.name.toLowerCase() === key
+        );
+        if (match) return match;
+      }
+      return null;
+    },
+    [withIds, baseList]
+  );
 
   const { gender, minAge, maxAge, clearFilters } = useTfhFilters();
   const [mounted, setMounted] = useState(false);
@@ -113,42 +151,51 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   }, []);
   useEffect(() => {
     if (didInitFromQuery.current) return;
-    let hasQuery = false;
     try {
       const sp = new URLSearchParams(window.location.search);
+      const profileKey = sp.get("profile");
+      if (profileKey) {
+        const horse = findHorseByProfileKey(profileKey);
+        if (horse) {
+          setModalEntry({ horse, profileKey });
+          setTab("browse");
+        }
+        didInitFromQuery.current = true;
+        return;
+      }
       const qid = sp.get("id");
-      const qname = sp.get("p") || sp.get("profile");
-      hasQuery = !!(qid || qname);
+      const qname = sp.get("p");
       if (qid || qname) {
         const targetId = qid || (qname ? `l_${stableIdForName(decodeURIComponent(qname))}` : undefined);
         const idx = filtered.findIndex((h) => (h as any).id === targetId);
         if (idx >= 0) {
-          // Defer to win over any localStorage index restoration
           setTimeout(() => setIndex(idx), 0);
           try { localStorage.setItem(TFH_STORAGE.INDEX, String(idx)); } catch {}
-          didInitFromQuery.current = true;
-          return;
         }
       }
     } catch {}
-    // Only mark as initialized if no query is present
-    if (!hasQuery) didInitFromQuery.current = true;
-  }, [filtered, setIndex]);
+    didInitFromQuery.current = true;
+  }, [filtered, setIndex, findHorseByProfileKey, setTab]);
 
   // Update URL when index changes (no reload)
   useEffect(() => {
     try {
       const u = new URL(window.location.href);
-      if (index >= 0 && index < filtered.length) {
+      if (modalEntry) {
+        u.searchParams.set("profile", modalEntry.profileKey);
+        u.searchParams.delete("id");
+        u.searchParams.delete("p");
+      } else if (index >= 0 && index < filtered.length) {
         u.searchParams.set("id", String((filtered[index] as any).id));
         u.searchParams.delete("p");
         u.searchParams.delete("profile");
       } else {
         u.searchParams.delete("id");
+        u.searchParams.delete("profile");
       }
       window.history.replaceState({}, "", u.toString());
     } catch {}
-  }, [index, filtered]);
+  }, [index, filtered, modalEntry]);
 
   // Restore last action on mount (for persisted undo)
   useEffect(() => {
@@ -291,6 +338,12 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         </div>
         )}
       </div>
+      {modalEntry && (
+        <ProfileModal
+          horse={modalEntry.horse}
+          onClose={() => setModalEntry(null)}
+        />
+      )}
       <FiltersModal />
       {undoToastOpen && <Toast message={undoToastOpen} type="info" />}
       {voteError && <Toast key={`vote-error-${voteErrorKey}`} message={voteError} type="error" />}

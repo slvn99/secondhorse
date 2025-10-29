@@ -3,7 +3,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 export default function Footer() {
   const ref = useRef<HTMLElement | null>(null);

@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import ProfileModal from "../_components/ProfileModal";
+import { parseProfileKey, type NormalizedProfileIdentifier } from "@/lib/profileIds";
 import { type LeaderboardResponse, type LeaderboardEntry } from "@/lib/voteTypes";
 
 type LeaderboardClientProps = {
@@ -34,17 +36,15 @@ function badgeClass(rank: number): string {
   return "bg-gradient-to-br from-pink-500 via-amber-400 to-pink-500 text-black";
 }
 
-function profileHref(entry: LeaderboardEntry): string | null {
-  if (entry.source === "db") {
-    return `/profile/${encodeURIComponent(entry.profileKey)}`;
-  }
-  if (entry.source === "seed") {
-    return `/profile/${encodeURIComponent(entry.profileKey)}`;
-  }
-  return null;
-}
-
-function LeaderboardList({ entries, directionLabel }: { entries: LeaderboardEntry[]; directionLabel: string }) {
+function LeaderboardList({
+  entries,
+  directionLabel,
+  onOpenProfile,
+}: {
+  entries: LeaderboardEntry[];
+  directionLabel: string;
+  onOpenProfile: (profileKey: string) => void;
+}) {
   if (!entries.length) {
     return (
       <div className="rounded-xl border border-neutral-800 bg-neutral-900/70 px-4 py-10 text-center text-neutral-300">
@@ -58,66 +58,55 @@ function LeaderboardList({ entries, directionLabel }: { entries: LeaderboardEntr
       {entries.map((entry) => (
         <li
           key={entry.profileKey}
-          className="group rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur-sm transition hover:border-neutral-700"
+          className="rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur-sm transition hover:border-neutral-700"
         >
-          {(() => {
-            const href = profileHref(entry);
-            const content = (
-              <>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${badgeClass(entry.rank)}`}>
-                  {entry.rank}
+          <button
+            type="button"
+            onClick={() => onOpenProfile(entry.profileKey)}
+            className="group flex w-full items-start gap-4 px-4 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
+            title={`View ${entry.displayName}`}
+            aria-label={`View ${entry.displayName}`}
+          >
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold ${badgeClass(entry.rank)}`}>
+              {entry.rank}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h3 className="text-lg font-semibold text-white truncate">{entry.displayName}</h3>
+                <span className="rounded-full border border-neutral-700 bg-neutral-800/80 px-2 py-0.5 text-xs text-neutral-300">
+                  {directionLabel}: {formatNumber(entry.directionCount)}
+                </span>
+                <span className="text-xs text-neutral-400">{formatProfileAge(entry.profileAgeDays)}</span>
+              </div>
+              <div className="mt-2 grid gap-2 text-sm text-neutral-300 sm:grid-cols-3">
+                <div>
+                  <span className="text-neutral-500">Likes:</span> {formatNumber(entry.likes)}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <h3 className="text-lg font-semibold text-white truncate">{entry.displayName}</h3>
-                    <span className="rounded-full border border-neutral-700 bg-neutral-800/80 px-2 py-0.5 text-xs text-neutral-300">
-                      {directionLabel}: {formatNumber(entry.directionCount)}
-                    </span>
-                    <span className="text-xs text-neutral-400">{formatProfileAge(entry.profileAgeDays)}</span>
-                  </div>
-                  <div className="mt-2 grid gap-2 text-sm text-neutral-300 sm:grid-cols-3">
-                    <div>
-                      <span className="text-neutral-500">Likes:</span> {formatNumber(entry.likes)}
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Dislikes:</span> {formatNumber(entry.dislikes)}
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">Profile ID:</span>{" "}
-                      <span className="font-mono text-xs sm:text-sm text-neutral-400">{entry.id}</span>
-                    </div>
-                  </div>
+                <div>
+                  <span className="text-neutral-500">Dislikes:</span> {formatNumber(entry.dislikes)}
                 </div>
-                {entry.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={entry.imageUrl}
-                    alt={`Photo of ${entry.displayName}`}
-                    className="hidden h-14 w-14 rounded-lg object-cover sm:block group-hover:scale-[1.03] group-hover:shadow-lg group-hover:shadow-pink-500/10 transition"
-                    loading="lazy"
-                    onError={(event) => {
-                      const img = event.currentTarget;
-                      if (!img.src.includes("Tinder-for-Horses-cover-image")) {
-                        img.src = "/TFH/Tinder-for-Horses-cover-image.png";
-                      }
-                    }}
-                  />
-                ) : null}
-              </>
-            );
-
-            const innerClass =
-              "flex items-start gap-4 px-4 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500";
-
-            if (href) {
-              return (
-                <Link href={href} className={innerClass} title={`View ${entry.displayName}`}>
-                  {content}
-                </Link>
-              );
-            }
-            return <div className={innerClass}>{content}</div>;
-          })()}
+                <div>
+                  <span className="text-neutral-500">Profile ID:</span>{" "}
+                  <span className="font-mono text-xs sm:text-sm text-neutral-400">{entry.id}</span>
+                </div>
+              </div>
+            </div>
+            {entry.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={entry.imageUrl}
+                alt={`Photo of ${entry.displayName}`}
+                className="hidden h-14 w-14 rounded-lg object-cover sm:block group-hover:scale-[1.03] group-hover:shadow-lg group-hover:shadow-pink-500/10 transition"
+                loading="lazy"
+                onError={(event) => {
+                  const img = event.currentTarget;
+                  if (!img.src.includes("Tinder-for-Horses-cover-image")) {
+                    img.src = "/TFH/Tinder-for-Horses-cover-image.png";
+                  }
+                }}
+              />
+            ) : null}
+          </button>
         </li>
       ))}
     </ol>
@@ -126,10 +115,53 @@ function LeaderboardList({ entries, directionLabel }: { entries: LeaderboardEntr
 
 export default function LeaderboardClient({ data }: LeaderboardClientProps) {
   const [activeTab, setActiveTab] = useState<TabId>("likes");
+  const [activeProfile, setActiveProfile] = useState<NormalizedProfileIdentifier | null>(null);
 
   const activeEntries = useMemo(() => {
     return activeTab === "likes" ? data.likes : data.dislikes;
   }, [activeTab, data]);
+
+  const handleOpenProfile = useCallback((profileKey: string) => {
+    try {
+      setActiveProfile(parseProfileKey(profileKey));
+    } catch {
+      // ignore invalid keys
+    }
+  }, []);
+
+  const handleCloseProfile = useCallback(() => {
+    setActiveProfile(null);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const profileKey = params.get("profile");
+      if (profileKey) {
+        handleOpenProfile(profileKey);
+      }
+    } catch {
+      // ignore malformed URLs
+    }
+  }, [handleOpenProfile]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      if (activeProfile) {
+        url.searchParams.set("profile", activeProfile.key);
+      } else {
+        url.searchParams.delete("profile");
+      }
+      if (url.toString() !== window.location.href) {
+        window.history.replaceState({}, "", url.toString());
+      }
+    } catch {
+      // ignore history failures (e.g., unsupported environments)
+    }
+  }, [activeProfile]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -200,9 +232,23 @@ export default function LeaderboardClient({ data }: LeaderboardClientProps) {
           <LeaderboardList
             entries={activeEntries}
             directionLabel={activeTab === "likes" ? "Likes" : "Dislikes"}
+            onOpenProfile={handleOpenProfile}
           />
         </div>
       </section>
+      {activeProfile && (
+        <ProfileModal
+          externalIdentifier={activeProfile}
+          onClose={handleCloseProfile}
+        />
+      )}
     </div>
   );
 }
+
+
+
+
+
+
+

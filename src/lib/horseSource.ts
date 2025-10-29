@@ -190,3 +190,28 @@ export async function loadHorsesFromDb(databaseUrl = process.env.DATABASE_URL): 
 export function parseHorseRow(row: unknown): Horse {
   return mapRowToHorse(row);
 }
+
+export async function loadHorseFromDbById(
+  id: string,
+  databaseUrl = process.env.DATABASE_URL
+): Promise<Horse | null> {
+  if (!databaseUrl) return null;
+  const sql = neon(databaseUrl);
+  try {
+    const rows = await (sql as any)`
+      SELECT p.id, p.display_name, p.bio, p.age_years, p.breed, p.gender, p.height_cm,
+             p.location_city, p.location_country, p.color, p.temperament, p.disciplines, p.interests,
+             COALESCE((SELECT json_agg(json_build_object('url', ph.url, 'is_primary', ph.is_primary, 'position', ph.position)
+                      ORDER BY ph.is_primary DESC, ph.position ASC)
+                      FROM profile_photos ph WHERE ph.profile_id = p.id), '[]'::json) AS photos
+      FROM profiles p
+      WHERE p.id = ${id}
+      LIMIT 1;
+    `;
+    const mapped = mapRows(rows as unknown[]);
+    return mapped[0] ?? null;
+  } catch (error) {
+    console.warn("Failed to load horse by id:", error);
+    return null;
+  }
+}

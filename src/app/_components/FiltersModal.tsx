@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useTfhFilters, useTfhUI, type GenderFilter } from "@/lib/tfh";
 
 export default function FiltersModal() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import clsx from "clsx";

@@ -5,16 +5,73 @@ import Image from "next/image";
 import type { Horse } from "@/lib/horses";
 import ConfirmDialog from "./ConfirmDialog";
 import { useTfhUI } from "@/lib/tfh";
+import type { NormalizedProfileIdentifier } from "@/lib/profileIds";
 
-export default function ProfileModal({ horse, onClose, onRemove }: { horse: Horse; onClose: () => void; onRemove?: (name: string) => void }) {
+type ProfileModalProps = {
+  horse?: Horse | null;
+  externalIdentifier?: NormalizedProfileIdentifier | null;
+  onClose: () => void;
+  onRemove?: (name: string) => void;
+};
+
+export default function ProfileModal({
+  horse,
+  externalIdentifier,
+  onClose,
+  onRemove,
+}: ProfileModalProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { pushOverlay, popOverlay } = useTfhUI();
-  const gallery = useMemo(() => {
-    const arr = Array.isArray(horse.photos) && horse.photos.length ? horse.photos : [horse.image];
-    return arr.filter((u): u is string => typeof u === 'string' && u.length > 0);
-  }, [horse]);
+  const [resolvedHorse, setResolvedHorse] = useState<Horse | null>(horse ?? null);
+  const [loading, setLoading] = useState<boolean>(!horse && !!externalIdentifier);
+  const [error, setError] = useState<string | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
-  useEffect(() => { setPhotoIndex(0); }, [horse?.name]);
+  useEffect(() => {
+    setResolvedHorse(horse ?? null);
+  }, [horse]);
+
+  useEffect(() => {
+    if (!externalIdentifier || horse) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetch(`/api/profile/${encodeURIComponent(externalIdentifier.key)}`, {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load profile");
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.horse) {
+          setResolvedHorse(data.horse as Horse);
+        } else {
+          setError("Profile unavailable");
+        }
+      })
+      .catch((err) => {
+        if (cancelled || err.name === "AbortError") return;
+        setError("Profile unavailable");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [externalIdentifier, horse]);
+
+  const gallery = useMemo(() => {
+    if (!resolvedHorse) return [];
+    const arr =
+      Array.isArray(resolvedHorse.photos) && resolvedHorse.photos.length
+        ? resolvedHorse.photos
+        : [resolvedHorse.image];
+    return arr.filter((u): u is string => typeof u === "string" && u.length > 0);
+  }, [resolvedHorse]);
   const prevPhoto = () => setPhotoIndex((i) => (i > 0 ? i - 1 : i));
   const nextPhoto = () => setPhotoIndex((i) => (i < gallery.length - 1 ? i + 1 : i));
   // Basic touch swipe for mobile
@@ -30,9 +87,15 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
     else if (dx < -threshold) nextPhoto();
   };
   useEffect(() => {
+    setPhotoIndex(0);
+  }, [resolvedHorse?.name]);
+
+  useEffect(() => {
     pushOverlay();
     return () => popOverlay();
   }, [pushOverlay, popOverlay]);
+
+  const horseName = resolvedHorse?.name ?? externalIdentifier?.key ?? "Profile";
 
   return (
     <div className="fixed inset-0 z-[1300]">
@@ -49,43 +112,59 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
         >
           {/* Header */}
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-neutral-800/80 bg-neutral-900/95">
-            <h3 className="text-xl sm:text-2xl font-semibold truncate">{horse.name}, {horse.age}</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold truncate">
+              {resolvedHorse ? `${resolvedHorse.name}, ${resolvedHorse.age}` : horseName}
+            </h3>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                title="Share profile"
-                aria-label="Share profile"
-                className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200"
-                onClick={async () => {
-                  try {
-                    const u = new URL(window.location.href);
-                    u.searchParams.set("p", encodeURIComponent(horse.name));
-                    u.searchParams.delete("id");
-                    const link = u.toString();
-                    const title = `${horse.name} – Second Horse Dating`;
-                    const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
-                    if ((navigator as any).share) {
-                      try { await (navigator as any).share({ title, text, url: link }); return; } catch (err: any) { if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return; }
-                    }
-                    try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
-                  } catch {}
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                </svg>
-              </button>
+              {resolvedHorse && (
+                <button
+                  type="button"
+                  title="Share profile"
+                  aria-label="Share profile"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200"
+                  onClick={async () => {
+                    if (!resolvedHorse) return;
+                    try {
+                      const u = new URL(window.location.href);
+                      u.searchParams.set("p", encodeURIComponent(resolvedHorse.name));
+                      u.searchParams.delete("id");
+                      const link = u.toString();
+                      const title = `${resolvedHorse.name} – Second Horse Dating`;
+                      const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
+                      if ((navigator as any).share) {
+                        try {
+                          await (navigator as any).share({ title, text, url: link });
+                          return;
+                        } catch (err: any) {
+                          if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return;
+                        }
+                      }
+                      try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
+                    } catch {}
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
           {/* Body */}
           <div className="px-5 py-4 overflow-y-auto flex-1 min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {!resolvedHorse ? (
+            <div className="py-20 text-center text-neutral-300">
+              {loading ? "Loading profile…" : error ?? "Profile unavailable."}
+            </div>
+          ) : (
+            <>
           <div className="relative" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} data-testid="profile-image">
             {/^https?:\/\//.test(gallery[photoIndex] || '') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={gallery[photoIndex]}
-                alt={`Photo ${photoIndex + 1} of ${gallery.length} – ${horse.name}`}
+                alt={`Photo ${photoIndex + 1} of ${gallery.length} – ${resolvedHorse.name}`}
                 className="rounded-lg w-full h-auto select-none"
                 loading="lazy"
                 decoding="async"
@@ -101,7 +180,7 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
             ) : (
               <Image
                 src={gallery[photoIndex]}
-                alt={`Photo ${photoIndex + 1} of ${gallery.length} – ${horse.name}`}
+                alt={`Photo ${photoIndex + 1} of ${gallery.length} – ${resolvedHorse.name}`}
                 width={500}
                 height={350}
                 className="rounded-lg w-full h-auto select-none"
@@ -151,27 +230,29 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
               </>
             )}
           </div>
-          <p className="text-sm text-gray-300 mt-4">{horse.breed} • {horse.gender} • {horse.heightCm} cm • {horse.location}</p>
-          {horse.color && horse.temperament && (
-            <p className="text-sm text-gray-300 mt-1">Color: {horse.color} • Temperament: {horse.temperament}</p>
+          <p className="text-sm text-gray-300 mt-4">{resolvedHorse.breed} • {resolvedHorse.gender} • {resolvedHorse.heightCm} cm • {resolvedHorse.location}</p>
+          {resolvedHorse.color && resolvedHorse.temperament && (
+            <p className="text-sm text-gray-300 mt-1">Color: {resolvedHorse.color} • Temperament: {resolvedHorse.temperament}</p>
           )}
-          {horse.description && (
-            <p className="text-sm text-gray-300 mt-2">{horse.description}</p>
+          {resolvedHorse.description && (
+            <p className="text-sm text-gray-300 mt-2">{resolvedHorse.description}</p>
           )}
-          {Array.isArray(horse.interests) && horse.interests.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">{horse.interests.map((interest) => (
+          {Array.isArray(resolvedHorse.interests) && resolvedHorse.interests.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">{resolvedHorse.interests.map((interest) => (
               <span key={interest} className="text-xs bg-pink-600/20 border border-pink-500/20 text-pink-200 px-2 py-1 rounded-full">{interest}</span>
             ))}</div>
           )}
-          {Array.isArray(horse.disciplines) && horse.disciplines.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">{horse.disciplines.map((d) => (
+          {Array.isArray(resolvedHorse.disciplines) && resolvedHorse.disciplines.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">{resolvedHorse.disciplines.map((d) => (
               <span key={d} className="text-xs bg-blue-600/20 border border-blue-500/20 text-blue-200 px-2 py-1 rounded-full">{d}</span>
             ))}</div>
+          )}
+          </>
           )}
           </div>
           {/* Footer */}
           <div className="px-5 py-3 flex items-center justify-end gap-3 border-t border-neutral-800/80 bg-neutral-900/95">
-            {onRemove && (
+            {onRemove && resolvedHorse && (
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
@@ -186,15 +267,15 @@ export default function ProfileModal({ horse, onClose, onRemove }: { horse: Hors
           </div>
         </div>
       </div>
-      {onRemove && (
+      {onRemove && resolvedHorse && (
         <ConfirmDialog
           open={confirmOpen}
           title="Unmatch this profile?"
-          message={<span>This will remove <strong>{horse.name}</strong> from your matches.</span>}
+          message={<span>This will remove <strong>{resolvedHorse.name}</strong> from your matches.</span>}
           confirmText="Unmatch"
           cancelText="Cancel"
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={() => { try { onRemove?.(horse.name); } finally { setConfirmOpen(false); onClose(); } }}
+          onConfirm={() => { try { onRemove?.(resolvedHorse.name); } finally { setConfirmOpen(false); onClose(); } }}
         />
       )}
     </div>
