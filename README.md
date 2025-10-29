@@ -16,7 +16,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - **Analytics**: Vercel Analytics integrated.
 
 **Tech Stack**
-- **Framework**: `Next.js 15` (App Router, server actions)
+- **Framework**: `Next.js 16` (App Router, Cache Components opt-in, server actions)
 - **Language**: TypeScript, React 18
 - **Styling**: Tailwind CSS, PostCSS, Autoprefixer
 - **DB**: Neon serverless Postgres via `@neondatabase/serverless` (optional)
@@ -45,7 +45,12 @@ Second Horse Dating (Tinder‑for‑Horses)
 - **Install**: `npm install`
 - **Dev server**: `npm run dev` then open `http://localhost:3000`
 - **Type check**: `npm run type-check`
-- **Lint**: `npm run lint` (auto‑fix: `npm run lint:fix`)
+- **Lint**: `npm run lint` (auto-fix: `npm run lint:fix`)
+
+**Next.js DevTools MCP**
+- `.mcp.json` registers the official `next-devtools-mcp` Model Context Protocol server.
+- Start the dev server with `npm run dev`; MCP-compatible coding agents will auto-discover the running instance.
+- See [Next.js DevTools MCP docs](https://nextjs.org/docs/app/guides/mcp) for available tools (error inspection, logs, page metadata, etc.).
 
 **Scripts**
 - `npm run dev`: Start local dev with HMR
@@ -168,3 +173,4 @@ Security note: a previously committed `.env.local` has been removed from the rep
 - Keyboard shortcuts: Left/Right/Enter to swipe, `Z` to undo.
 - Health endpoint: `GET /api/health` returns `{ ok: true, timestamp }`.
 - TypeScript excludes `src/app/new/**/*` and `src/app/_lib/uploads.ts` from strict checking to ease server action ergonomics.
+
