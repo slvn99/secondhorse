@@ -36,7 +36,6 @@ describe("useVoteQueue", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete (globalThis as any).fetch;
   });
 

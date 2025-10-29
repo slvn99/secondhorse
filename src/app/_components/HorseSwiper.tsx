@@ -56,7 +56,7 @@ export default function HorseSwiper({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const detailsRef = useRef<HTMLDivElement | null>(null);
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [imgLoaded, setImgLoaded] = useState(false);
+  const [, setImgLoaded] = useState(false);
   // Smooth height/opacity animation for details
   useEffect(() => {
     const el = detailsRef.current;

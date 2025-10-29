@@ -21,9 +21,9 @@ function findSeedHorse(id: string): Horse | null {
 
 export async function GET(
   _request: Request,
-  context: { params: { key?: string } }
+  context: { params: Promise<{ key?: string }> }
 ) {
-  const rawKey = context.params?.key;
+  const { key: rawKey } = await context.params;
   if (!rawKey) {
     return NextResponse.json({ error: "Profile key is required" }, { status: 400 });
   }

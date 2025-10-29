@@ -177,6 +177,7 @@ export async function loadHorsesFromDb(databaseUrl = process.env.DATABASE_URL): 
     const fallbackRows = await queryHorses(sql, false);
     return mapRows(fallbackRows as unknown[]);
   } catch (error) {
+    console.warn("Primary horse query failed, retrying without filters:", error);
     try {
       const fallbackRows = await queryHorses(sql, false);
       return mapRows(fallbackRows as unknown[]);

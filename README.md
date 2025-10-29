@@ -41,7 +41,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `v2/`: Reference only; do not depend on it
 
 **Getting Started**
-- **Requirements**: Node `>= 18.18` or `>= 20`, npm
+- **Requirements**: Node `>= 20.9`, npm
 - **Install**: `npm install`
 - **Dev server**: `npm run dev` then open `http://localhost:3000`
 - **Type check**: `npm run type-check`
@@ -139,7 +139,7 @@ Security note: a previously committed `.env.local` has been removed from the rep
 
 **Troubleshooting**
 - **Stale build cache**: Error like `Cannot find module './586.js'` → `npm run clean` then `npm run dev`. If it persists: `npm run reset`.
-- **Node version**: Use Node `>= 18.18` or `>= 20`.
+- **Node version**: Use Node `>= 20.9`.
 - **Asset paths**: If images 404, verify `public/TFH` exists and Next rewrites are active.
 
 **Suggested Improvements**

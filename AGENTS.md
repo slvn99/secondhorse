@@ -60,7 +60,7 @@ Security & Configuration Tips
 
 Troubleshooting
 ---------------
-- Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node ≥ 18.18 or 20.x.
+- Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node >= 20.9.
 
 Agent Notes
 -----------
@@ -603,3 +603,5 @@ Descriptions support literal newlines; shell examples may show escaped `\\n`, bu
 Full help available: `backlog --help`
 
 <!-- BACKLOG.MD GUIDELINES END -->
+
+

@@ -11,7 +11,6 @@ import React, {
   useState,
 } from "react";
 import type { Horse } from "@/lib/horses";
-import { stableIdForName } from "@/lib/profileIds";
 
 export const TFH_STORAGE = {
   MATCHES: "tfh_matches",

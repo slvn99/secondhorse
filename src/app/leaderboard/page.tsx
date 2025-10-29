@@ -33,13 +33,9 @@ export default async function LeaderboardPage() {
     );
   }
 
+  let data: Awaited<ReturnType<typeof generateLeaderboard>>;
   try {
-    const data = await generateLeaderboard({ databaseUrl });
-    return (
-      <ScrollContainer>
-        <LeaderboardClient data={data} />
-      </ScrollContainer>
-    );
+    data = await generateLeaderboard({ databaseUrl });
   } catch (error) {
     console.warn("Failed to render leaderboard page:", error);
     return (
@@ -51,4 +47,10 @@ export default async function LeaderboardPage() {
       </ScrollContainer>
     );
   }
+
+  return (
+    <ScrollContainer>
+      <LeaderboardClient data={data} />
+    </ScrollContainer>
+  );
 }

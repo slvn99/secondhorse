@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { Metadata } from "next";
-import type { Horse } from "@/lib/horses";
 import { horses as localHorses } from "@/lib/horses";
 import { loadHorsesFromDb } from "@/lib/horseSource";
 import TfhClient from "./_components/TfhClient";
