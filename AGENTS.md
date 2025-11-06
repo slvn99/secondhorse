@@ -8,7 +8,7 @@ Project Structure & Module Organization
   - src/lib: Domain utilities and types (e.g., horses.ts).
   - src/app/_components: Client components (e.g., TfhClient.tsx).
 - public/TFH: Static TFH assets (images, audio).
-- scripts/: Developer utilities (e.g., clean.sh).
+- scripts/: Developer utilities (e.g., clean.mjs, reset.mjs).
 - v2/: Reference only; do not depend on it. Relevant bits have been ported.
 
 Build, Test, and Development Commands
@@ -18,8 +18,8 @@ Build, Test, and Development Commands
 - npm start: Run the compiled server.
 - npm run lint: Run ESLint checks.
 - npm run type-check: TypeScript checks without emitting.
-- npm run clean: Remove .next/.turbo caches.
-- npm run reset: Clean caches, reinstall deps, rebuild.
+- npm run clean: Remove .next/.turbo caches via the cross-platform Node helper.
+- npm run reset: Clean caches and reinstall deps using the Node helper.
 
 Coding Style & Naming Conventions
 ---------------------------------

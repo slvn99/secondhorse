@@ -1,9 +1,10 @@
 # Dependencies
 node_modules
 
-# Next.js
+# Builds / Next.js output
 .next
 out
+.turbo/
 .vercel
 
 # Logs
@@ -12,31 +13,25 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Env files
+# Environment files
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env*.local
 
-# Editor
+# Editor / OS
 .DS_Store
 .idea
 .vscode
 
-
-.vercel
-.env*.local
-
+# Legacy reference directory
 /v2
-tsconfig.tsbuildinfo
+
+# TypeScript build info
 tsconfig.tsbuildinfo
 *.tsbuildinfo
- 
-# Test coverage reports
+
+# Coverage reports
 coverage/
-
-# Turbo cache (if used)
-.turbo/
-
-.env*.local

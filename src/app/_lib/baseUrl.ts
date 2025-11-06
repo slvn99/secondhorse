@@ -1,7 +1,17 @@
-const sanitize = (value: string): string => {
+const PROTOCOL_RE = /^[a-z][a-z0-9+\-.]*:\/\//i;
+
+const sanitize = (value: string, defaultScheme = "https"): string | null => {
+  if (!value) return null;
   const trimmed = value.trim();
-  const withoutProtocol = trimmed.replace(/^[a-z]+:\/\//i, '');
-  return `https://${withoutProtocol.replace(/\/+$/, '')}`;
+  if (!trimmed) return null;
+
+  if (PROTOCOL_RE.test(trimmed)) {
+    return trimmed.replace(/\/+$/, "");
+  }
+
+  const withoutSlash = trimmed.replace(/^\/+/, "").replace(/\/+$/, "");
+  if (!withoutSlash) return null;
+  return `${defaultScheme}://${withoutSlash}`;
 };
 
 export function resolveBaseUrl(defaultDomain = 'secondhorse.nl'): string {
@@ -14,10 +24,11 @@ export function resolveBaseUrl(defaultDomain = 'secondhorse.nl'): string {
   ];
 
   for (const candidate of candidates) {
-    if (candidate && candidate.trim()) {
-      return sanitize(candidate);
+    const sanitized = sanitize(candidate);
+    if (sanitized) {
+      return sanitized;
     }
   }
 
-  return `https://${defaultDomain}`;
+  return sanitize(`https://${defaultDomain}`) ?? `https://${defaultDomain}`;
 }

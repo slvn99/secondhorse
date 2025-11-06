@@ -36,7 +36,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `src/lib`: Domain utilities and data (`horses.ts`, `tfh.ts`, `git.ts`, etc.)
 - `src/types`: Local type shims
 - `public/TFH`: Static images and audio used by the UI
-- `scripts/`: Dev utilities (`clean.sh`)
+- `scripts/`: Dev utilities (`clean.mjs`, `reset.mjs`)
 - `tests/`: Vitest tests (e.g., seed data validation)
 - `v2/`: Reference only; do not depend on it
 
@@ -58,8 +58,8 @@ Second Horse Dating (Tinder‑for‑Horses)
 - `npm start`: Run compiled server
 - `npm run lint`: ESLint checks (`next/core-web-vitals`)
 - `npm run type-check`: TypeScript without emit
-- `npm run clean`: Remove `.next/.turbo` caches
-- `npm run reset`: Clean caches, reinstall deps, rebuild
+- `npm run clean`: Remove `.next/.turbo` caches using the cross-platform Node helper
+- `npm run reset`: Clean caches and reinstall dependencies via the Node helper
 - `npm test`: Run Vitest once
 - `npm run test:watch`: Vitest in watch mode
 - `npm run coverage`: Coverage report (v8)
