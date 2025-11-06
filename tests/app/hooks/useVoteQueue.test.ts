@@ -39,17 +39,19 @@ describe("useVoteQueue", () => {
     delete (globalThis as any).fetch;
   });
 
-  it("submits a vote for a database profile", async () => {
+  it("queues a database vote without surfacing errors", async () => {
     const fetchMock = vi.fn().mockResolvedValue(okResponse);
     (globalThis as any).fetch = fetchMock;
 
     const { result } = renderHook(() => useVoteQueue());
 
+    let votePromise: Promise<void> | undefined;
     await act(async () => {
-      await result.current.queueVote(
+      votePromise = result.current.queueVote(
         createHorse({ id: "123e4567-e89b-12d3-a456-426614174000" }),
         true
       );
+      await Promise.resolve();
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -59,63 +61,106 @@ describe("useVoteQueue", () => {
       direction: "like",
       profileType: "db",
     });
-  });
-
-  it("retries after a transient failure and eventually succeeds", async () => {
-    vi.useFakeTimers();
-    const fetchMock = vi
-      .fn()
-      .mockRejectedValueOnce(new Error("network glitch"))
-      .mockResolvedValue(okResponse);
-    (globalThis as any).fetch = fetchMock;
-
-    const { result } = renderHook(() => useVoteQueue());
-
+    expect(votePromise).toBeDefined();
     await act(async () => {
-      const promise = result.current.queueVote(createHorse(), false);
-      await vi.runAllTimersAsync();
-      await promise;
+      await votePromise!;
     });
-
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const [, secondInit] = fetchMock.mock.calls[1];
-    expect(JSON.parse(String((secondInit as RequestInit).body))).toEqual({
-      direction: "dislike",
-      profileType: "seed",
-      seedName: "Star",
-    });
+    expect(result.current.pendingCount).toBe(0);
+    expect(result.current.lastError).toBeNull();
   });
 
-  it("exposes an error after exhausting retries", async () => {
+  it("retries retryable failures with backoff before succeeding", async () => {
     vi.useFakeTimers();
+    const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
     const failureResponse = {
       ok: false,
       status: 500,
       json: vi.fn().mockResolvedValue({ error: { message: "Server down" } }),
     } as unknown as Response;
-    const fetchMock = vi.fn().mockResolvedValue(failureResponse);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(failureResponse)
+      .mockResolvedValueOnce(failureResponse)
+      .mockResolvedValue(okResponse);
     (globalThis as any).fetch = fetchMock;
 
     const { result } = renderHook(() => useVoteQueue());
 
-    let capturedError: unknown;
+    let votePromise: Promise<void> | undefined;
     await act(async () => {
-      const promise = result.current
-        .queueVote(createHorse({ id: `l_${stableIdForName("Star")}` }), true)
-        .catch((err) => {
-          capturedError = err;
-        });
-      await vi.runAllTimersAsync();
-      await promise;
+      votePromise = result.current.queueVote(
+        createHorse({ id: `l_${stableIdForName("Star")}` }),
+        true
+      );
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+    await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    await Promise.resolve();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    expect(votePromise).toBeDefined();
+    await act(async () => {
+      await votePromise!;
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(capturedError).toBeInstanceOf(Error);
-    expect(result.current.lastError).toContain("Server down");
+    const backoffDelays = timeoutSpy.mock.calls
+      .map(([, delay]) => (typeof delay === "number" ? delay : null))
+      .filter((delay): delay is number => delay !== null);
+    expect(backoffDelays.slice(-2)).toEqual([800, 1600]);
+    const thirdCall = fetchMock.mock.calls[2];
+    const thirdInit = thirdCall?.[1] as RequestInit | undefined;
+    expect(thirdInit).toBeDefined();
+    expect(JSON.parse(String(thirdInit?.body))).toMatchObject({
+      direction: "like",
+      profileType: "seed",
+      seedName: "Star",
+    });
+    expect(result.current.pendingCount).toBe(0);
+    expect(result.current.lastError).toBeNull();
+  });
+
+  it("surfaces non-retryable failures and clears errors on request", async () => {
+    const throttledResponse = {
+      ok: false,
+      status: 429,
+      json: vi.fn().mockResolvedValue({}),
+    } as unknown as Response;
+    const fetchMock = vi.fn().mockResolvedValue(throttledResponse);
+    (globalThis as any).fetch = fetchMock;
+
+    const { result } = renderHook(() => useVoteQueue());
+
+    let captured: Error | null = null;
+    await act(async () => {
+      try {
+        await result.current.queueVote(createHorse(), false);
+      } catch (error) {
+        captured = error as Error;
+      }
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(captured).toBeInstanceOf(Error);
+    expect(captured?.message).toBe("You are voting too quickly. Please slow down.");
+    expect(result.current.pendingCount).toBe(0);
+    expect(result.current.lastError).toBe("You are voting too quickly. Please slow down.");
 
     act(() => {
       result.current.clearError();
     });
+
     expect(result.current.lastError).toBeNull();
   });
 });

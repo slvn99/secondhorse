@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/app/_lib/rateLimit";
@@ -114,6 +115,9 @@ export async function POST(request: Request, context: any) {
       clientHash,
       timestamp: now,
     });
+
+    revalidateTag("horses", "max");
+    revalidateTag("leaderboard", "max");
 
     return NextResponse.json({
       totals: serializeVoteTotals(totals),

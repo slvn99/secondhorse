@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { neon } from "@neondatabase/serverless";
 import { horses } from "@/lib/horses";
 import { stableIdForName } from "@/lib/profileIds";
@@ -100,6 +101,9 @@ function toLeaderboardEntries(
 }
 
 export async function generateLeaderboard(options: GenerateOptions = {}): Promise<LeaderboardResponse> {
+  "use cache";
+  cacheLife("leaderboard");
+  cacheTag("leaderboard");
   const { limit = 25, sql, databaseUrl } = options;
   const client = sql ?? (databaseUrl ? (neon(databaseUrl) as unknown as SqlClient) : undefined);
 

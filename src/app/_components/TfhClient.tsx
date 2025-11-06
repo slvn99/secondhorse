@@ -2,15 +2,94 @@
 
 import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import dynamic, { type DynamicOptionsLoadingProps } from "next/dynamic";
 import type { Horse } from "@/lib/horses";
+import { deriveProfileIdentifier, profileUrlFor } from "@/lib/profilePath";
 import HorseSwiper from "./HorseSwiper";
-import MatchesView from "./MatchesView";
-import ProfileModal from "./ProfileModal";
 import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, TFH_STORAGE } from "@/lib/tfh";
-import FiltersModal from "./FiltersModal";
-import CoachMarks from "./CoachMarks";
 import Toast from "./Toast";
 import { useVoteQueue } from "@/app/_hooks/useVoteQueue";
+
+let closeProfileModalRef: (() => void) | null = null;
+
+function MatchesViewFallback() {
+  return (
+    <div className="flex min-h-[200px] flex-col items-center justify-center text-sm text-neutral-300" role="status" aria-live="polite">
+      <span className="animate-pulse">Loading matches...</span>
+    </div>
+  );
+}
+
+function FiltersModalFallback({ error, retry }: DynamicOptionsLoadingProps) {
+  const { filtersOpen, closeFilters } = useTfhUI();
+  if (!filtersOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-6">
+      <div className="absolute inset-0 bg-black/60" onClick={closeFilters} aria-hidden="true" />
+      <div className="relative z-10 w-[92vw] max-w-md rounded-2xl border border-neutral-800 bg-neutral-900/95 backdrop-blur p-4 text-neutral-100 shadow-2xl" role="dialog" aria-modal="true">
+        <p className="text-sm font-medium">{error ? "We could not load the filters panel." : "Loading filters..."}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-300">
+          {error ? (
+            <>
+              <button type="button" onClick={() => retry?.()} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 hover:bg-neutral-700">Retry</button>
+              <button type="button" onClick={closeFilters} className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1.5 hover:bg-neutral-800">Close</button>
+            </>
+          ) : (
+            <>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" aria-hidden="true" />
+              <span>Preparing controls...</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileModalFallback({ error, retry }: DynamicOptionsLoadingProps) {
+  const { pushOverlay, popOverlay } = useTfhUI();
+  useEffect(() => {
+    pushOverlay();
+    return () => popOverlay();
+  }, [pushOverlay, popOverlay]);
+
+  const handleClose = useCallback(() => {
+    closeProfileModalRef?.();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[1300]">
+      <div className="fixed inset-0 bg-black/70" onClick={handleClose} aria-hidden="true" />
+      <div className="relative z-10 flex min-h-full items-center justify-center px-4 py-6">
+        <div className="w-full max-w-sm rounded-2xl border border-neutral-800 bg-neutral-900/95 p-6 text-neutral-100 shadow-2xl" role="dialog" aria-modal="true" aria-live="assertive">
+          <p className="text-sm font-medium">{error ? "We could not load the profile." : "Loading profile..."}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-neutral-300">
+            {error ? (
+              <>
+                <button type="button" onClick={() => retry?.()} className="rounded border border-neutral-700 bg-neutral-800 px-3 py-1.5 hover:bg-neutral-700">Retry</button>
+                <button type="button" onClick={handleClose} className="rounded border border-neutral-700 bg-neutral-900 px-3 py-1.5 hover:bg-neutral-800">Close</button>
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" aria-hidden="true" />
+                <span>Preparing profile details...</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoachMarksFallback() {
+  return null;
+}
+
+const MatchesView = dynamic(() => import("./MatchesView"), { loading: () => <MatchesViewFallback /> });
+const FiltersModal = dynamic(() => import("./FiltersModal"), { loading: (props) => <FiltersModalFallback {...props} /> });
+const ProfileModal = dynamic(() => import("./ProfileModal"), { loading: (props) => <ProfileModalFallback {...props} /> });
+const CoachMarks = dynamic(() => import("./CoachMarks"), { loading: () => <CoachMarksFallback /> });
 
 export default function TfhClient({ horses }: { horses: Horse[] }) {
   const baseList = useMemo(() => horses ?? [], [horses]);
@@ -36,6 +115,15 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
   };
   const [tab, setTab] = useState<"browse" | "matches">("browse");
   const [modalEntry, setModalEntry] = useState<{ horse: Horse; profileKey: string } | null>(null);
+  const closeModal = useCallback(() => setModalEntry(null), []);
+  useEffect(() => {
+    closeProfileModalRef = closeModal;
+    return () => {
+      if (closeProfileModalRef === closeModal) {
+        closeProfileModalRef = null;
+      }
+    };
+  }, [closeModal]);
   const urlHasTarget = useMemo(() => {
     try { const sp = new URLSearchParams(window.location.search); return !!(sp.get("id") || sp.get("p") || sp.get("profile")); } catch { return false; }
   }, []);
@@ -186,9 +274,15 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
         u.searchParams.delete("id");
         u.searchParams.delete("p");
       } else if (index >= 0 && index < filtered.length) {
-        u.searchParams.set("id", String((filtered[index] as any).id));
+        const current = filtered[index];
+        const identifier = deriveProfileIdentifier(current);
+        if (identifier) {
+          u.searchParams.set("profile", identifier.key);
+        } else {
+          u.searchParams.delete("profile");
+        }
+        u.searchParams.delete("id");
         u.searchParams.delete("p");
-        u.searchParams.delete("profile");
       } else {
         u.searchParams.delete("id");
         u.searchParams.delete("profile");
@@ -253,10 +347,10 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 showUndo={hasActedThisSession}
                 onShare={async () => {
                   try {
-                    const u = new URL(window.location.href);
-                    const link = u.toString();
-                    const h = index >= 0 && index < filtered.length ? filtered[index] : null;
-                    const title = h ? `${h.name} – Second Horse Dating` : "Second Horse Dating";
+                    const horse = index >= 0 && index < filtered.length ? filtered[index] : null;
+                    const fallbackLink = window.location.origin || "";
+                    const link = horse ? profileUrlFor(window.location.origin, horse) ?? fallbackLink : fallbackLink;
+                    const title = horse ? `${horse.name} - Second Horse Dating` : "Second Horse Dating";
                     const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
                     if (typeof navigator !== "undefined" && (navigator as any).share) {
                       try {
@@ -286,7 +380,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 </div>
               )}
               {mounted && kbHint && (
-                <div className="-mt-3 text-center text-[11px] text-neutral-300">Tip: use ←/→ to swipe, Z to undo</div>
+                <div className="-mt-3 text-center text-[11px] text-neutral-300">Tip: use Left/Right to swipe, Z to undo</div>
               )}
               {/* Removed text undo link; dedicated button provided above. */}
             </>
@@ -300,12 +394,12 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
           <div className="fixed inset-x-0 z-[850] bg-neutral-900/80 backdrop-blur border-t border-neutral-800 px-3 py-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]" style={{ bottom: "var(--footer-height, 3rem)" }}>
             <div className="grid grid-cols-6 gap-2">
               <button type="button" onClick={() => setTab("browse")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "browse" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
-                <span aria-hidden className="text-base">🏇</span>
+                <span aria-hidden className="text-base">{"\uD83D\uDC34"}</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Discover</span>
               </button>
               <button type="button" onClick={() => setTab("matches")} className={`h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition min-w-0 ${tab === "matches" ? "bg-neutral-800/90 text-white ring-1 ring-neutral-700/50 shadow-inner" : "bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60"}`}>
                 <span className="relative inline-flex">
-                  <span aria-hidden className="text-base">❤️</span>
+                  <span aria-hidden className="text-base">{"\u2764\uFE0F"}</span>
                   {showMatchesBadge && (
                     <span className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 inline-flex items-center justify-center">
                       <span className="absolute inset-0 rounded-full bg-amber-400 opacity-60 animate-ping" aria-hidden="true" />
@@ -322,15 +416,15 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 <span className="hidden sm:inline whitespace-nowrap truncate">Filters</span>
               </button>
               <button type="button" aria-label="Project info" title="Project info" onClick={toggleProjectInfo} className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <span aria-hidden className="text-base">ℹ️</span>
+                <span aria-hidden className="text-base">{"\u2139\uFE0F"}</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Info</span>
               </button>
               <Link href="/leaderboard" title="Leaderboard" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <span aria-hidden className="text-base">🏆</span>
+                <span aria-hidden className="text-base">{"\uD83C\uDFC6"}</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Leaderboard</span>
               </Link>
               <a href="/new" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <span aria-hidden className="text-base">➕</span>
+                <span aria-hidden className="text-base">{"\u2795"}</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Add</span>
               </a>
             </div>
@@ -341,7 +435,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
       {modalEntry && (
         <ProfileModal
           horse={modalEntry.horse}
-          onClose={() => setModalEntry(null)}
+          onClose={closeModal}
         />
       )}
       <FiltersModal />
@@ -351,3 +445,6 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     </div>
   );
 }
+
+
+

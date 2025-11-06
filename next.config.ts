@@ -6,6 +6,23 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
+  cacheComponents: true,
+  /**
+   * Cache profiles shared by horse and leaderboard fetchers.
+   * Keep data warm for a short period but allow rapid revalidation.
+   */
+  cacheLife: {
+    horses: {
+      stale: 60, // 1 minute of instant responses
+      revalidate: 300, // revalidate in the background every 5 minutes
+      expire: 3600, // hard expiry after 1 hour
+    },
+    leaderboard: {
+      stale: 30, // leaderboards can change rapidly
+      revalidate: 180, // refresh in background every 3 minutes
+      expire: 1800, // force refresh at least every 30 minutes
+    },
+  },
   reactStrictMode: true,
   images: {
     remotePatterns: [

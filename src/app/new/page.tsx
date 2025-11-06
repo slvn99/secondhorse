@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import type { Metadata } from "next";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers, cookies } from "next/headers";
 import Script from "next/script";
@@ -240,6 +241,9 @@ async function create(formData: FormData) {
       } catch {}
     }
 
+    revalidateTag("horses", "max");
+    revalidateTag("leaderboard", "max");
+
     await setNotice("success", `Profile \"${display_name}\" created.${attemptedFileUpload && fileUploadFailed ? ' (image upload unavailable)' : ''}`);
     redirect("/");
   } catch (e) {
@@ -263,4 +267,3 @@ export default async function NewProfilePage() {
     </div>
   );
 }
-

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Horse } from "@/lib/horses";
+import { profileUrlFor } from "@/lib/profilePath";
 import ProfileModal from "./ProfileModal";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -13,11 +14,9 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
 
   const shareProfile = async (horse: Horse) => {
     try {
-      const u = new URL(window.location.href);
-      u.searchParams.set("p", encodeURIComponent(horse.name));
-      u.searchParams.delete("id");
-      const link = u.toString();
-      const title = `${horse.name} – Second Horse Dating`;
+      const link = profileUrlFor(window.location.origin, horse);
+      if (!link) return;
+      const title = `${horse.name} - Second Horse Dating`;
       const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
       if ((navigator as any).share) {
         try { await (navigator as any).share({ title, text, url: link }); return; } catch (err: any) { if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return; }
@@ -53,8 +52,8 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
               <Image src={horse.image} alt={`Photo of ${horse.name}`} width={200} height={200} className="rounded-md" onError={(e) => { try { const img = e.currentTarget as HTMLImageElement; if (!img.src.includes("Tinder-for-Horses-cover-image")) { img.src = "/TFH/Tinder-for-Horses-cover-image.png"; } } catch {} }} />
             )}
             <p className="mt-2 font-semibold">{horse.name}, {horse.age}</p>
-            <p className="text-xs text-gray-400">{horse.gender} • {horse.heightCm} cm</p>
-            <p className="text-xs text-gray-400">{horse.breed} • {horse.location}</p>
+            <p className="text-xs text-gray-400">{horse.gender} | {horse.heightCm} cm</p>
+            <p className="text-xs text-gray-400">{horse.breed} | {horse.location}</p>
               <div className="mt-2 flex items-center justify-between w-full">
                 <span className="text-xs text-neutral-300 underline">View full profile</span>
                 <div className="flex items-center gap-2">

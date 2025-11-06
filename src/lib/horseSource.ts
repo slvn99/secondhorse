@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { neon } from "@neondatabase/serverless";
 import { z } from "zod";
 import type { Horse } from "@/lib/horses";
@@ -168,6 +169,9 @@ function mapRows(rows: unknown[]): Horse[] {
 }
 
 export async function loadHorsesFromDb(databaseUrl = process.env.DATABASE_URL): Promise<Horse[]> {
+  "use cache";
+  cacheLife("horses");
+  cacheTag("horses");
   if (!databaseUrl) return [];
   const sql = neon(databaseUrl);
   try {
@@ -196,6 +200,9 @@ export async function loadHorseFromDbById(
   id: string,
   databaseUrl = process.env.DATABASE_URL
 ): Promise<Horse | null> {
+  "use cache";
+  cacheLife("horses");
+  cacheTag("horses");
   if (!databaseUrl) return null;
   const sql = neon(databaseUrl);
   try {

@@ -14,6 +14,7 @@ Second Horse Dating (Tinder‑for‑Horses)
 - **Profile submissions**: `/new` accepts URLs and file uploads (Vercel Blob when configured). Optional hCaptcha in production.
 - **Project info + sidebar**: Collapsible sidebar with project notes and version/date from Git.
 - **Analytics**: Vercel Analytics integrated.
+- **Fresh caching**: Cache Components tag horse and leaderboard data (`horses`, `leaderboard`) so pages stay responsive while votes and new profiles trigger revalidation.
 
 **Tech Stack**
 - **Framework**: `Next.js 16` (App Router, Cache Components opt-in, server actions)
