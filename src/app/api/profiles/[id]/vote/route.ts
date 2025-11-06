@@ -11,8 +11,6 @@ import {
 import { serializeVoteTotals, type VoteRequestPayload } from "@/lib/voteTypes";
 import { evaluateVoteGuard, hashClientIdentifier } from "@/lib/voteGuard";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 const voteRequestSchema = z.object({
   direction: z.enum(["like", "dislike"]),
