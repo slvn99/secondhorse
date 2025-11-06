@@ -30,7 +30,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 function sanitizeText(v: unknown, max = 500): string {
   let s = typeof v === "string" ? v : String(v ?? "");
