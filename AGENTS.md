@@ -71,6 +71,7 @@ Documentation
 Next DevTools MCP
 -----------------
 - Assume the Next DevTools MCP server is running on the local dev server at `http://localhost:3000`. Use it whenever you need runtime insight, especially when the user mentions dev server errors or references Next DevTools.
+- Never start a new dev server yourself. Always connect to the existing server on port 3000, calling `nextjs_runtime` with `port: "3000"` for `list_tools` or other actions if discovery fails.
 - Kick off Next.js work by calling `next-devtools__init` to load mandatory docs guidance, then use `nextjs_runtime` (starting with `discover_servers` and `list_tools`) before inspecting code or running tests.
 - Prefer runtime tooling from Next DevTools (e.g., `get_errors`, `get_project_metadata`) to diagnose or confirm fixes instead of relying on manual guesses or HTTP-only checks.
 
