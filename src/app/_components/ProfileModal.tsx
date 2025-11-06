@@ -32,6 +32,8 @@ export default function ProfileModal({
   const [error, setError] = useState<string | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "error">("idle");
+  const [viewportUnit, setViewportUnit] = useState<"100vh" | "100dvh">("100vh");
+  const [modalSpacing, setModalSpacing] = useState<string>("4rem");
   useEffect(() => {
     setResolvedHorse(horse ?? null);
   }, [horse]);
@@ -98,6 +100,34 @@ export default function ProfileModal({
   }, [resolvedHorse?.name]);
 
   useEffect(() => {
+    if (!isModal) return;
+    if (typeof window === "undefined") return;
+    const supportsDvh =
+      typeof window.CSS !== "undefined" &&
+      typeof window.CSS.supports === "function" &&
+      window.CSS.supports("height: 100dvh");
+    if (supportsDvh) {
+      setViewportUnit((prev) => (prev === "100dvh" ? prev : "100dvh"));
+    } else {
+      setViewportUnit((prev) => (prev === "100vh" ? prev : "100vh"));
+    }
+  }, [isModal]);
+
+  useEffect(() => {
+    if (!isModal) return;
+    if (typeof window === "undefined") return;
+    const supportsEnv =
+      typeof window.CSS !== "undefined" &&
+      typeof window.CSS.supports === "function" &&
+      window.CSS.supports("padding-bottom", "env(safe-area-inset-bottom)");
+    if (supportsEnv) {
+      setModalSpacing("env(safe-area-inset-bottom) + 4rem");
+    } else {
+      setModalSpacing("4rem");
+    }
+  }, [isModal]);
+
+  useEffect(() => {
     if (!isModal) return undefined;
     pushOverlay();
     return () => popOverlay();
@@ -116,8 +146,7 @@ export default function ProfileModal({
     : "w-full max-w-3xl bg-neutral-900/95 backdrop-blur rounded-2xl border border-gray-700 shadow-2xl text-left overflow-hidden flex flex-col";
   const containerStyle = isModal
     ? {
-        maxHeight:
-          "calc(100dvh - var(--footer-height, 3rem) - env(safe-area-inset-bottom) - 4rem)",
+        maxHeight: `calc(${viewportUnit} - var(--footer-height, 3rem) - (${modalSpacing}))`,
       }
     : undefined;
 
@@ -129,7 +158,7 @@ export default function ProfileModal({
       aria-modal={isModal ? "true" : undefined}
       data-testid="profile-modal"
     >
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-neutral-800/80 bg-neutral-900/95">
           <h3 className="text-xl sm:text-2xl font-semibold truncate">

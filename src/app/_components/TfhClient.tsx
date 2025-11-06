@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState, useEffect, useCallback } from "react"
 import Link from "next/link";
 import dynamic, { type DynamicOptionsLoadingProps } from "next/dynamic";
 import type { Horse } from "@/lib/horses";
-import { deriveProfileIdentifier, profileUrlFor } from "@/lib/profilePath";
+import { profileUrlFor } from "@/lib/profilePath";
 import { PROFILE_SHARE_TEXT, shareWithNativeOrCopy } from "@/lib/share";
 import HorseSwiper from "./HorseSwiper";
 import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, TFH_STORAGE } from "@/lib/tfh";
@@ -266,31 +266,20 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
     didInitFromQuery.current = true;
   }, [filtered, setIndex, findHorseByProfileKey, setTab]);
 
-  // Update URL when index changes (no reload)
+  // Sync URL profile target with modal state (no reload)
   useEffect(() => {
     try {
       const u = new URL(window.location.href);
       if (modalEntry) {
         u.searchParams.set("profile", modalEntry.profileKey);
-        u.searchParams.delete("id");
-        u.searchParams.delete("p");
-      } else if (index >= 0 && index < filtered.length) {
-        const current = filtered[index];
-        const identifier = deriveProfileIdentifier(current);
-        if (identifier) {
-          u.searchParams.set("profile", identifier.key);
-        } else {
-          u.searchParams.delete("profile");
-        }
-        u.searchParams.delete("id");
-        u.searchParams.delete("p");
       } else {
-        u.searchParams.delete("id");
         u.searchParams.delete("profile");
       }
+      u.searchParams.delete("id");
+      u.searchParams.delete("p");
       window.history.replaceState({}, "", u.toString());
     } catch {}
-  }, [index, filtered, modalEntry]);
+  }, [modalEntry]);
 
   // Restore last action on mount (for persisted undo)
   useEffect(() => {

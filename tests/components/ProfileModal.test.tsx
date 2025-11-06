@@ -77,7 +77,7 @@ describe('ProfileModal', () => {
       const modal = container.querySelector('[data-testid="profile-modal"]') as HTMLElement;
       expect(modal).toBeTruthy();
       expect(modal.getAttribute('style') || '').toContain('var(--footer-height');
-      expect(modal.getAttribute('style') || '').toContain('- 4rem)');
+      expect(modal.getAttribute('style') || '').toContain(' - (4rem)');
       // Body has overflow-y-auto
       const body = Array.from(container.querySelectorAll('div')).find(d => d.className?.toString().includes('overflow-y-auto')) as HTMLElement | undefined;
       expect(body).toBeTruthy();
