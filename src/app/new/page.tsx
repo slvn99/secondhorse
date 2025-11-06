@@ -29,8 +29,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/new" },
 };
 
-export const dynamic = "force-dynamic";
-
 function sanitizeText(v: unknown, max = 500): string {
   let s = typeof v === "string" ? v : String(v ?? "");
   s = s.normalize("NFC").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "").trim();
