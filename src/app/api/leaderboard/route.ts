@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateLeaderboard } from "@/lib/leaderboard";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 export async function GET() {
   const databaseUrl = process.env.DATABASE_URL;
