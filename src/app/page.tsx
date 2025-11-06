@@ -32,8 +32,9 @@ export const revalidate = 60; // revalidate page every 60s
 
 export default async function SecondHorsePage() {
   const flags = loadFeatureFlagsForRuntime();
+  const preferDatabaseFlag = flags?.["preferDatabase"];
   const preferDatabase =
-    typeof flags["preferDatabase"] === "boolean" ? (flags["preferDatabase"] as boolean) : true;
+    typeof preferDatabaseFlag === "boolean" ? preferDatabaseFlag : true;
   const dbHorses = await loadHorsesFromDb();
   const horses = preferDatabase && dbHorses.length ? dbHorses : localHorses;
   return (
