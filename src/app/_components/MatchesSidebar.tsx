@@ -6,6 +6,7 @@ import { horses as allHorses } from "@/lib/horses";
 import { useTfhMatches, useTfhUI } from "@/lib/tfh";
 import type { Horse } from "@/lib/horses";
 import { profileUrlFor } from "@/lib/profilePath";
+import { PROFILE_SHARE_TEXT, shareWithNativeOrCopy } from "@/lib/share";
 import ProfileModal from "./ProfileModal";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -16,22 +17,43 @@ export default function MatchesSidebar() {
   const [selectedHorse, setSelectedHorse] = React.useState<Horse | null>(null);
   const [confirmName, setConfirmName] = React.useState<string | null>(null);
   const [isHydrated, setIsHydrated] = React.useState(false);
+  const [shareFeedback, setShareFeedback] = React.useState<{ name: string; type: "copied" | "error" } | null>(null);
+  const shareTimeoutRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     setIsHydrated(true);
   }, []);
 
+  React.useEffect(() => () => {
+    if (shareTimeoutRef.current) {
+      window.clearTimeout(shareTimeoutRef.current);
+    }
+  }, []);
+
   const shareProfile = async (horse: Horse) => {
     try {
       const link = profileUrlFor(window.location.origin, horse);
-      if (!link) return;
-      const title = `${horse.name} - Second Horse Dating`;
-      const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
-      if ((navigator as any).share) {
-        try { await (navigator as any).share({ title, text, url: link }); return; } catch (err: any) { if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return; }
+      if (!link) {
+        setShareFeedback({ name: horse.name, type: "error" });
+        if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+        shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+        return;
       }
-      try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
-    } catch {}
+      const outcome = await shareWithNativeOrCopy({
+        title: `${horse.name} - Second Horse Dating`,
+        text: PROFILE_SHARE_TEXT,
+        url: link,
+      });
+      if (outcome === "copied" || outcome === "failed" || outcome === "unsupported") {
+        setShareFeedback({ name: horse.name, type: outcome === "copied" ? "copied" : "error" });
+        if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+        shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+      }
+    } catch {
+      setShareFeedback({ name: horse.name, type: "error" });
+      if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+      shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+    }
   };
 
   return (
@@ -136,10 +158,16 @@ export default function MatchesSidebar() {
                   </button>
                   <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button type="button" onClick={() => shareProfile(horse)} title="Share profile" aria-label="Share profile" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                      </svg>
+                      {shareFeedback?.name === horse.name ? (
+                        <span className={`text-[10px] ${shareFeedback.type === "error" ? "text-red-300" : "text-emerald-300"}`}>
+                          {shareFeedback.type === "error" ? "ERR" : "OK"}
+                        </span>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                        </svg>
+                      )}
                     </button>
                     <button type="button" onClick={() => setConfirmName(horse.name)} title="Unmatch" aria-label="Unmatch" className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-red-300 hover:text-red-200">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M6.225 5.811a1 1 0 0 1 1.414 0L12 10.172l4.361-4.361a1 1 0 1 1 1.414 1.414L13.414 11.586l4.361 4.361a1 1 0 1 1-1.414 1.414L12 13.414l-4.361 4.361a1 1 0 0 1-1.414-1.414l4.361-4.361-4.361-4.361a1 1 0 0 1 0-1.414z" clipRule="evenodd" /></svg>

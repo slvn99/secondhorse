@@ -1,28 +1,45 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import type { Horse } from "@/lib/horses";
 import { profileUrlFor } from "@/lib/profilePath";
+import { PROFILE_SHARE_TEXT, shareWithNativeOrCopy } from "@/lib/share";
 import ProfileModal from "./ProfileModal";
 import ConfirmDialog from "./ConfirmDialog";
 
 export default function MatchesView({ matches, onRemove }: { matches: Horse[]; onRemove?: (name: string) => void }) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [shareFeedback, setShareFeedback] = useState<{ name: string; type: "copied" | "error" } | null>(null);
   const [confirmName, setConfirmName] = useState<string | null>(null);
+  const shareTimeoutRef = useRef<number | null>(null);
 
   const shareProfile = async (horse: Horse) => {
     try {
       const link = profileUrlFor(window.location.origin, horse);
-      if (!link) return;
-      const title = `${horse.name} - Second Horse Dating`;
-      const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
-      if ((navigator as any).share) {
-        try { await (navigator as any).share({ title, text, url: link }); return; } catch (err: any) { if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return; }
+      if (!link) {
+        setShareFeedback({ name: horse.name, type: "error" });
+        return;
       }
-      try { await navigator.clipboard.writeText(`${text}\n${link}`); setCopied(horse.name); setTimeout(() => setCopied(null), 1500); } catch {}
-    } catch {}
+      const outcome = await shareWithNativeOrCopy({
+        title: `${horse.name} - Second Horse Dating`,
+        text: PROFILE_SHARE_TEXT,
+        url: link,
+      });
+      if (outcome === "copied" || outcome === "failed") {
+        setShareFeedback({ name: horse.name, type: outcome === "copied" ? "copied" : "error" });
+        if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+        shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+      } else if (outcome === "unsupported") {
+        setShareFeedback({ name: horse.name, type: "error" });
+        if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+        shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+      }
+    } catch {
+      setShareFeedback({ name: horse.name, type: "error" });
+      if (shareTimeoutRef.current) window.clearTimeout(shareTimeoutRef.current);
+      shareTimeoutRef.current = window.setTimeout(() => setShareFeedback(null), 1500);
+    }
   };
 
   useEffect(() => {
@@ -30,6 +47,14 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
     if (selectedHorse) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedHorse]);
+
+  useEffect(() => {
+    return () => {
+      if (shareTimeoutRef.current) {
+        window.clearTimeout(shareTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="text-center space-y-4 text-white pb-[60px] md:pb-0">
@@ -64,8 +89,10 @@ export default function MatchesView({ matches, onRemove }: { matches: Horse[]; o
                     aria-label="Share profile"
                     className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-neutral-700 hover:bg-neutral-800 text-blue-300 hover:text-blue-200"
                   >
-                    {copied === horse.name ? (
-                      <span className="text-[10px]">OK</span>
+                    {shareFeedback?.name === horse.name ? (
+                      <span className={`text-[10px] ${shareFeedback.type === "error" ? "text-red-300" : "text-emerald-300"}`}>
+                        {shareFeedback.type === "error" ? "ERR" : "OK"}
+                      </span>
                     ) : (
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />

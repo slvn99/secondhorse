@@ -7,6 +7,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import { useTfhUI } from "@/lib/tfh";
 import type { NormalizedProfileIdentifier } from "@/lib/profileIds";
 import { profileUrlFor } from "@/lib/profilePath";
+import { PROFILE_SHARE_TEXT, shareWithNativeOrCopy } from "@/lib/share";
 
 type ProfileModalProps = {
   horse?: Horse | null;
@@ -30,6 +31,7 @@ export default function ProfileModal({
   const [loading, setLoading] = useState<boolean>(!horse && !!externalIdentifier);
   const [error, setError] = useState<string | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "error">("idle");
   useEffect(() => {
     setResolvedHorse(horse ?? null);
   }, [horse]);
@@ -80,6 +82,7 @@ export default function ProfileModal({
   const nextPhoto = () => setPhotoIndex((i) => (i < gallery.length - 1 ? i + 1 : i));
   // Basic touch swipe for mobile
   const touchStartX = useRef<number | null>(null);
+  const shareResetRef = useRef<number | null>(null);
   const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0]?.clientX ?? null; };
   const onTouchEnd = (e: React.TouchEvent) => {
     const startX = touchStartX.current; touchStartX.current = null;
@@ -99,6 +102,12 @@ export default function ProfileModal({
     pushOverlay();
     return () => popOverlay();
   }, [isModal, pushOverlay, popOverlay]);
+
+  useEffect(() => () => {
+    if (shareResetRef.current) {
+      window.clearTimeout(shareResetRef.current);
+    }
+  }, []);
 
   const horseName = resolvedHorse?.name ?? externalIdentifier?.key ?? "Profile";
 
@@ -137,27 +146,50 @@ export default function ProfileModal({
                   if (!resolvedHorse) return;
                   try {
                     const link = profileUrlFor(window.location.origin, resolvedHorse, externalIdentifier);
-                    if (!link) return;
-                    const title = `${resolvedHorse.name} - Second Horse Dating`;
-                    const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
-                    if ((navigator as any).share) {
-                      try {
-                        await (navigator as any).share({ title, text, url: link });
-                        return;
-                      } catch (err: any) {
-                        if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) return;
-                      }
+                    if (!link) {
+                      setShareStatus("error");
+                      if (shareResetRef.current) window.clearTimeout(shareResetRef.current);
+                      shareResetRef.current = window.setTimeout(() => setShareStatus("idle"), 1600);
+                      return;
                     }
-                    try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
-                  } catch {}
+                    const outcome = await shareWithNativeOrCopy({
+                      title: `${resolvedHorse.name} - Second Horse Dating`,
+                      text: PROFILE_SHARE_TEXT,
+                      url: link,
+                    });
+                    if (outcome === "copied" || outcome === "failed" || outcome === "unsupported") {
+                      setShareStatus(outcome === "copied" ? "copied" : "error");
+                      if (shareResetRef.current) window.clearTimeout(shareResetRef.current);
+                      shareResetRef.current = window.setTimeout(() => setShareStatus("idle"), 1600);
+                    } else if (outcome === "shared" || outcome === "cancelled") {
+                      setShareStatus("idle");
+                    }
+                  } catch {
+                    setShareStatus("error");
+                    if (shareResetRef.current) window.clearTimeout(shareResetRef.current);
+                    shareResetRef.current = window.setTimeout(() => setShareStatus("idle"), 1600);
+                  }
                 }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                </svg>
+                {shareStatus === "copied" ? (
+                  <span className="text-[11px] font-semibold text-emerald-300">OK</span>
+                ) : shareStatus === "error" ? (
+                  <span className="text-[11px] font-semibold text-red-300">ERR</span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                  </svg>
+                )}
               </button>
             )}
+            <span className="sr-only" aria-live="polite">
+              {shareStatus === "copied"
+                ? "Profile link copied to clipboard."
+                : shareStatus === "error"
+                ? "Unable to share profile."
+                : ""}
+            </span>
           </div>
         </div>
         {/* Body */}

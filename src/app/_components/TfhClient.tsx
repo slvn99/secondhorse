@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic, { type DynamicOptionsLoadingProps } from "next/dynamic";
 import type { Horse } from "@/lib/horses";
 import { deriveProfileIdentifier, profileUrlFor } from "@/lib/profilePath";
+import { PROFILE_SHARE_TEXT, shareWithNativeOrCopy } from "@/lib/share";
 import HorseSwiper from "./HorseSwiper";
 import { useTfhMatches, useDeckIndex, useTfhFilters, useTfhUI, stableIdForName, TFH_STORAGE } from "@/lib/tfh";
 import Toast from "./Toast";
@@ -351,22 +352,20 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                     const fallbackLink = window.location.origin || "";
                     const link = horse ? profileUrlFor(window.location.origin, horse) ?? fallbackLink : fallbackLink;
                     const title = horse ? `${horse.name} - Second Horse Dating` : "Second Horse Dating";
-                    const text = "Check out this profile on secondhorse.nl, a dating app for horses.";
-                    if (typeof navigator !== "undefined" && (navigator as any).share) {
-                      try {
-                        await (navigator as any).share({ title, text, url: link });
-                        return;
-                      } catch (err: any) {
-                        // If user cancels share, do nothing; otherwise fallback
-                        if (err && (err.name === "AbortError" || err.name === "NotAllowedError")) {
-                          return;
-                        }
-                      }
+                    const outcome = await shareWithNativeOrCopy({
+                      title,
+                      text: PROFILE_SHARE_TEXT,
+                      url: link,
+                      copyContent: `${PROFILE_SHARE_TEXT}\n${link}`,
+                    });
+                    if (outcome === "copied") {
+                      setUndoToastOpen("Share message copied");
+                    } else if (outcome === "failed" || outcome === "unsupported") {
+                      setUndoToastOpen("Unable to share profile link");
                     }
-                    // Fallback: copy to clipboard
-                    try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch {}
-                    setUndoToastOpen("Share message copied");
-                  } catch {}
+                  } catch {
+                    setUndoToastOpen("Unable to share profile link");
+                  }
                 }}
               />
               {index < filtered.length && (
