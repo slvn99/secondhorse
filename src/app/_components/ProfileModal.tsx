@@ -11,7 +11,7 @@ import { profileUrlFor } from "@/lib/profilePath";
 type ProfileModalProps = {
   horse?: Horse | null;
   externalIdentifier?: NormalizedProfileIdentifier | null;
-  onClose: () => void;
+  onClose?: () => void;
   onRemove?: (name: string) => void;
   variant?: "modal" | "standalone";
 };
@@ -19,7 +19,7 @@ type ProfileModalProps = {
 export default function ProfileModal({
   horse,
   externalIdentifier,
-  onClose,
+  onClose = () => {},
   onRemove,
   variant = "modal",
 }: ProfileModalProps) {

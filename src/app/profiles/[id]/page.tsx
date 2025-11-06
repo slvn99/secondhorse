@@ -69,7 +69,6 @@ export default async function ProfilePage({ params }: ProfilePageParams) {
         <ProfileModal
           horse={horse}
           externalIdentifier={identifier}
-          onClose={() => {}}
           variant="standalone"
         />
       </div>
