@@ -8,8 +8,6 @@ export const metadata: Metadata = {
   description: "See the most liked and disliked horse profiles across Second Horse Dating.",
 };
 
-export const revalidate = 60;
-
 function ScrollContainer({ children }: { children: ReactNode }) {
   return (
     <div className="h-full w-full overflow-y-auto" data-testid="leaderboard-scroll-container">
