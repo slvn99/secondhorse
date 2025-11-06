@@ -63,7 +63,7 @@ async function executeVoteRequest(target: VoteTarget, direction: VoteDirection) 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: payload as any,
+    body: JSON.stringify(payload),
     credentials: "same-origin",
   });
 
