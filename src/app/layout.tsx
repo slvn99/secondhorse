@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
@@ -6,7 +6,6 @@ import CollapsibleSidebar from "./_components/CollapsibleSidebar";
 import MatchesSidebar from "./_components/MatchesSidebar";
 import IntroOverlay from "./_components/IntroOverlay";
 import Footer from "./_components/Footer";
-import Toast from "./_components/Toast";
 import CookieBanner from "./_components/CookieBanner";
 import { getLastCommitDate, getShortCommit } from "@/lib/git";
 import { TfhProvider } from "@/lib/tfh";
@@ -15,6 +14,25 @@ import { Analytics } from "@vercel/analytics/react";
 import { resolveBaseUrl } from "./_lib/baseUrl";
 
 const siteOrigin = resolveBaseUrl();
+const currentYear = new Date().getUTCFullYear();
+
+async function ToastFromCookie() {
+  try {
+    const ck = await cookies();
+    const raw = ck.get("tfh_notice")?.value;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      type?: "success" | "error" | "info";
+      message?: string;
+    };
+    if (!parsed?.message) return null;
+    const type = parsed.type ?? "info";
+    const Toast = (await import("./_components/Toast")).default;
+    return <Toast message={parsed.message} type={type} />;
+  } catch {
+    return null;
+  }
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const created = "2025-02-25"; // visible creation date label
@@ -26,19 +44,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const version = shortFromGit ? `git-${shortFromGit}` : shortFromEnv ? `git-${shortFromEnv}` : "v0.1";
   const lastUpdated = dateFromGit || created;
 
-  // Read one-time toast from cookie if present
-  let toast: { type: "success" | "error" | "info"; message: string } | null = null;
-  try {
-    const ck = await cookies();
-    const raw = ck.get("tfh_notice")?.value;
-    if (raw) toast = JSON.parse(raw);
-  } catch {}
-
   return (
     <html lang="en">
       <body>
         <TfhProvider>
-          {toast && <Toast message={toast.message} type={(toast.type as any) || "info"} />}
+          <Suspense fallback={null}>
+            <ToastFromCookie />
+          </Suspense>
           <CookieBanner />
           <div className={`relative flex h-[calc(100dvh-var(--footer-height,3rem))] overflow-hidden ${styles.scope}`}>
             <IntroOverlay />
@@ -113,7 +125,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
           </div>
           <Analytics />
-          <Footer />
+          <Footer currentYear={currentYear} />
         </TfhProvider>
       </body>
     </html>

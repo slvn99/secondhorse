@@ -51,9 +51,18 @@ export function buildProfileMetadata({
   canonical,
 }: BuildProfileMetadataOptions): Metadata {
   const fallbackDescription = baseMetadata.description ?? "";
-  const defaultOgImages = baseMetadata.openGraph?.images ?? [];
+  const defaultOgImages = baseMetadata.openGraph?.images;
+  const normalizedOgImages = Array.isArray(defaultOgImages)
+    ? defaultOgImages
+    : defaultOgImages
+    ? [defaultOgImages]
+    : [];
+
+  type TwitterObject = Exclude<NonNullable<Metadata["twitter"]>, string>;
   const baseTwitter =
-    typeof baseMetadata.twitter === "object" ? baseMetadata.twitter : undefined;
+    typeof baseMetadata.twitter === "object"
+      ? (baseMetadata.twitter as TwitterObject)
+      : undefined;
 
   const title = `${horse.name} | Second Horse Dating`;
 
@@ -62,8 +71,17 @@ export function buildProfileMetadata({
     : fallbackDescription ||
       `Meet ${horse.name}, a ${horse.breed} from ${horse.location}.`;
 
+  const fallbackOgUrl = normalizedOgImages
+    .map((image) => {
+      if (!image) return undefined;
+      if (typeof image === "string") return image;
+      if (image instanceof URL) return image.toString();
+      return image.url;
+    })
+    .find((url): url is string => typeof url === "string" && url.length > 0);
+
   const primaryImage =
-    horse.photos?.[0] ?? horse.image ?? defaultOgImages[0]?.url;
+    horse.photos?.[0] ?? horse.image ?? fallbackOgUrl;
   const altText = `Second Horse Dating profile for ${horse.name}`;
 
   const keywords = Array.isArray(baseMetadata.keywords)
@@ -93,15 +111,21 @@ export function buildProfileMetadata({
       url: canonical ?? baseMetadata.openGraph?.url,
       images: primaryImage
         ? [{ url: primaryImage, alt: altText }]
-        : defaultOgImages,
+        : normalizedOgImages,
     },
-    twitter: {
-      ...baseTwitter,
-      card: baseTwitter?.card ?? "summary_large_image",
-      title,
-      description,
-      images: primaryImage ? [primaryImage] : baseTwitter?.images,
-    },
+    twitter: baseTwitter
+      ? {
+          ...baseTwitter,
+          title,
+          description,
+          images: primaryImage ? [primaryImage] : baseTwitter.images,
+        }
+      : {
+          card: "summary_large_image",
+          title,
+          description,
+          images: primaryImage ? [primaryImage] : undefined,
+        },
     keywords,
   };
 }

@@ -5,7 +5,11 @@ import { faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import React, { useEffect, useRef } from "react";
 
-export default function Footer() {
+type FooterProps = {
+  currentYear: number;
+};
+
+export default function Footer({ currentYear }: FooterProps) {
   const ref = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export default function Footer() {
         <div className="flex items-center gap-2">
           <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">SLVN</a>
           <span className="text-neutral-500">•</span>
-          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">&copy; {new Date().getFullYear()}</a>
+          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">&copy; {currentYear}</a>
           <span className="hidden sm:inline text-neutral-500">•</span>
           <span className="hidden sm:inline">All rights reserved</span>
         </div>
