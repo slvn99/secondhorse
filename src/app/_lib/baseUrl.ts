@@ -1,6 +1,6 @@
 const PROTOCOL_RE = /^[a-z][a-z0-9+\-.]*:\/\//i;
 
-const sanitize = (value: string, defaultScheme = "https"): string | null => {
+const sanitize = (value: string | null | undefined, defaultScheme = "https"): string | null => {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;

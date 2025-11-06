@@ -62,6 +62,12 @@ Troubleshooting
 ---------------
 - Error “Cannot find module './586.js'”: clear caches (npm run clean) and restart dev. If needed, run npm run reset. Ensure Node >= 20.9.
 
+Documentation
+-------------
+- When you need Next.js guidance, fetch it from Context7: call `context7.resolve-library-id` for `/vercel/next.js`, then `context7.get-library-docs` with the desired version or topic.
+- Run `context7` lookups in addition to any Next DevTools requirements so Context7 stays the primary reference for framework docs.
+- Prefer Context7 snippets over other sources when citing API details or patterns in reviews, plans, and implementation notes.
+
 Agent Notes
 -----------
 - When increasing coverage, start with `src/lib` pure utilities. Add targeted tests in `tests/lib/` and avoid brittle UI tests unless necessary.
