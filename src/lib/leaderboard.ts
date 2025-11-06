@@ -24,37 +24,40 @@ type GenerateOptions = {
   databaseUrl?: string;
 };
 
+type ProfileMetadataRow = {
+  id: string;
+  display_name: string | null;
+  image_url: string | null;
+};
+
 async function fetchDbMetadata(sql: SqlClient | undefined, ids: string[]): Promise<Map<string, ProfileMetadata>> {
   const map = new Map<string, ProfileMetadata>();
   if (!sql || ids.length === 0) return map;
-  for (const id of ids) {
-    const rows = await sql<{
-      id: string;
-      display_name: string | null;
-      image_url: string | null;
-    }>`
-      SELECT
-        p.id,
-        p.display_name,
-        (
-          SELECT url
-          FROM profile_photos ph
-          WHERE ph.profile_id = p.id
-          ORDER BY ph.is_primary DESC, ph.position ASC
-          LIMIT 1
-        ) AS image_url
-      FROM profiles p
-      WHERE p.id = ${id}
-      LIMIT 1;
-    `;
-    const record = rows[0];
-    if (!record) continue;
+
+  const rows = await sql<ProfileMetadataRow>`
+    SELECT
+      p.id,
+      p.display_name,
+      photo.image_url
+    FROM profiles p
+    LEFT JOIN LATERAL (
+      SELECT url AS image_url
+      FROM profile_photos ph
+      WHERE ph.profile_id = p.id
+      ORDER BY ph.is_primary DESC, ph.position ASC
+      LIMIT 1
+    ) AS photo ON true
+    WHERE p.id = ANY(${ids});
+  `;
+
+  for (const record of rows) {
     const displayName = record.display_name?.trim() || "Unknown profile";
     map.set(record.id, {
       displayName,
       imageUrl: record.image_url,
     });
   }
+
   return map;
 }
 
