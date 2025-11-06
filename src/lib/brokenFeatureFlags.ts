@@ -9,6 +9,9 @@ let memoizedFlags: Record<string, unknown> | null = null;
  * so parsing will currently throw and surface in the dev server.
  */
 export function loadFeatureFlagsForRuntime() {
+  if (process.env.NODE_ENV !== "production") {
+    memoizedFlags = null;
+  }
   if (memoizedFlags) {
     return memoizedFlags;
   }
