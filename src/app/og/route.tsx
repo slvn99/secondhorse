@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 export async function GET() {
   const title = 'Second Horse Dating';
   const subtitle = 'Saddle up! Swipe your perfect pasture partner.';
