@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   },
 };
 
+const LAST_UPDATED =
+  process.env.NEXT_PUBLIC_TRADEMARK_NOTE_LAST_UPDATED ?? "2025-02-25";
+
 export default function TrademarkParodyPage() {
   return (
     <div className="h-full overflow-y-auto">
@@ -32,7 +35,7 @@ export default function TrademarkParodyPage() {
           </Link>
         </div>
         <h1 className="text-2xl font-semibold">Trademark & Parody Note</h1>
-        <p className="mt-2 text-sm text-neutral-400">Last updated: {new Date().toISOString().slice(0, 10)}</p>
+        <p className="mt-2 text-sm text-neutral-400">Last updated: {LAST_UPDATED}</p>
 
         <section className="mt-6 space-y-3 text-sm leading-relaxed text-neutral-300">
           <p>
