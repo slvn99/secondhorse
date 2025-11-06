@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { horses as localHorses } from "@/lib/horses";
 import { loadHorsesFromDb } from "@/lib/horseSource";
+import { loadFeatureFlagsForRuntime } from "@/lib/brokenFeatureFlags";
 import TfhClient from "./_components/TfhClient";
 
 export const metadata: Metadata = {
@@ -30,8 +31,11 @@ export const metadata: Metadata = {
 export const revalidate = 60; // revalidate page every 60s
 
 export default async function SecondHorsePage() {
+  const flags = loadFeatureFlagsForRuntime();
+  const preferDatabase =
+    typeof flags["preferDatabase"] === "boolean" ? (flags["preferDatabase"] as boolean) : true;
   const dbHorses = await loadHorsesFromDb();
-  const horses = dbHorses.length ? dbHorses : localHorses;
+  const horses = preferDatabase && dbHorses.length ? dbHorses : localHorses;
   return (
     <div className="relative w-full h-full">
       {/* Fixed background layer to keep visuals consistent across mobile/desktop */}

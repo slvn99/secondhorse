@@ -1,0 +1,9 @@
+{
+  "preferDatabase": true,
+  "experiments": [
+    "new-leaderboard",
+    "profile-holograms"
+  ],
+  "releaseRollout": 0.5,
+  // TODO: fix this configuration before shipping.
+}

@@ -68,6 +68,12 @@ Documentation
 - Run `context7` lookups in addition to any Next DevTools requirements so Context7 stays the primary reference for framework docs.
 - Prefer Context7 snippets over other sources when citing API details or patterns in reviews, plans, and implementation notes.
 
+Next DevTools MCP
+-----------------
+- Assume the Next DevTools MCP server is running on the local dev server at `http://localhost:3000`. Use it whenever you need runtime insight, especially when the user mentions dev server errors or references Next DevTools.
+- Kick off Next.js work by calling `next-devtools__init` to load mandatory docs guidance, then use `nextjs_runtime` (starting with `discover_servers` and `list_tools`) before inspecting code or running tests.
+- Prefer runtime tooling from Next DevTools (e.g., `get_errors`, `get_project_metadata`) to diagnose or confirm fixes instead of relying on manual guesses or HTTP-only checks.
+
 Agent Notes
 -----------
 - When increasing coverage, start with `src/lib` pure utilities. Add targeted tests in `tests/lib/` and avoid brittle UI tests unless necessary.
