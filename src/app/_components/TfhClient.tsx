@@ -326,7 +326,7 @@ export default function TfhClient({ horses }: { horses: Horse[] }) {
                 <span className="hidden sm:inline whitespace-nowrap truncate">Info</span>
               </button>
               <Link href="/leaderboard" title="Leaderboard" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
-                <span aria-hidden className="text-base">LB</span>
+                <span aria-hidden className="text-base">🏆</span>
                 <span className="hidden sm:inline whitespace-nowrap truncate">Leaderboard</span>
               </Link>
               <a href="/new" className="h-12 w-full text-[11px] inline-flex items-center justify-center gap-1 rounded-lg transition bg-neutral-900/70 text-neutral-300 hover:bg-neutral-800/60 min-w-0">
