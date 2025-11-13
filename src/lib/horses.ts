@@ -28,7 +28,7 @@ export const horses: Horse[] = [
     disciplines: ["trail", "endurance"],
     description: "An energetic Arabian with a love for adventure.",
     interests: ["trail rides", "racing", "apple picking"],
-    image: "https://images.unsplash.com/uploads/14136148007774dc82563/ce92d553?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_star.svg",
   },
   {
     name: "Willow",
@@ -42,7 +42,7 @@ export const horses: Horse[] = [
     disciplines: ["trail", "pleasure"],
     description: "Gentle mare that enjoys long rides on the beach.",
     interests: ["beach trots", "sunsets", "carrots"],
-    image: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_willow.svg",
   },
   {
     name: "Thunder",
@@ -56,7 +56,7 @@ export const horses: Horse[] = [
     disciplines: ["barrels", "ranch"],
     description: "Young stallion looking for fun and fast gallops.",
     interests: ["sprints", "mud baths", "hay bales"],
-    image: "https://images.unsplash.com/photo-1504310977373-186d29f99322?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_thunder.svg",
   },
   {
     name: "Bella",
@@ -70,7 +70,7 @@ export const horses: Horse[] = [
     disciplines: ["trail", "liberty"],
     description: "Friendly and curious. Loves apples and cuddles.",
     interests: ["cuddles", "apple treats", "grooming"],
-    image: "https://images.unsplash.com/photo-1514861889637-9f51bc99fc19?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_bella.svg",
   },
   {
     name: "Shadow",
@@ -84,7 +84,7 @@ export const horses: Horse[] = [
     disciplines: ["dressage", "driving"],
     description: "Mysterious Friesian that loves moonlit trots.",
     interests: ["night rides", "classical music", "pumpkin spice"],
-    image: "https://images.unsplash.com/photo-1598974357801-cbca100e65d3?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_shadow.svg",
   },
   {
     name: "Luna",
@@ -98,7 +98,7 @@ export const horses: Horse[] = [
     disciplines: ["dressage", "trail"],
     description: "Elegant mare who enjoys quiet forest paths.",
     interests: ["forest walks", "stargazing", "sugar cubes"],
-    image: "https://images.unsplash.com/photo-1593179449458-e0d43d512551?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_luna.svg",
   },
   {
     name: "Blaze",
@@ -112,7 +112,7 @@ export const horses: Horse[] = [
     disciplines: ["jumping", "eventing"],
     description: "Fiery spirit with a need for speed.",
     interests: ["jumping", "racing", "peppermints"],
-    image: "https://images.unsplash.com/photo-1557374800-8ba4ccd60e9d?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_blaze.svg",
   },
   {
     name: "Daisy",
@@ -126,7 +126,7 @@ export const horses: Horse[] = [
     disciplines: ["leadline", "cart"],
     description: "Sweet pony that loves children and sugar cubes.",
     interests: ["kids", "cart rides", "rolling in grass"],
-    image: "https://images.unsplash.com/photo-1513966007261-5a86a5284471?w=500&h=350&fit=crop",
+    image: "/TFH/horse_placeholder_daisy.svg",
   },
   {
     name: "Marlin",

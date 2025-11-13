@@ -7,7 +7,7 @@ Project Structure & Module Organization
   - src/app: Routes, layouts, server actions (e.g., src/app/new/page.tsx).
   - src/lib: Domain utilities and types (e.g., horses.ts).
   - src/app/_components: Client components (e.g., TfhClient.tsx).
-- public/TFH: Static TFH assets (images, audio).
+- public/TFH: Static TFH assets (images).
 - scripts/: Developer utilities (e.g., clean.mjs, reset.mjs).
 - v2/: Reference only; do not depend on it. Relevant bits have been ported.
 
@@ -91,6 +91,11 @@ Moderation
 # Instructions for the usage of Backlog.md CLI Tool
 
 ## Backlog.md: Comprehensive Project Management Tool via CLI
+
+### MCP integration
+- A global MCP server named `backlog` is configured (command `backlog mcp start`). Use `/mcp` or `list_mcp_resources` with `server: "backlog"` to confirm it is reachable before working with tasks.
+- Fetch Backlog-specific guidance via MCP resources (e.g., `backlog://docs/task-workflow`) instead of guessing the workflow. Keep these instructions in sync when the server updates.
+- Even with MCP access, continue performing every task change through the Backlog CLI commands documented below—never edit markdown task files directly.
 
 ### Assistant Objective
 

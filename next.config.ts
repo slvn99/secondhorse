@@ -26,9 +26,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
-      // Seed images use Unsplash
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "plus.unsplash.com" },
       // AI-generated images served via DeepAI
       { protocol: "https", hostname: "api.deepai.org" },
       // Uploaded images use Vercel Blob
@@ -57,8 +54,6 @@ const nextConfig: NextConfig = {
       { source: "/:path*/tinder-for-horses-background.png", destination: "/Tinder-for-Horses-background.png" },
       { source: "/TFH/Tinder-for-Horses-cover-image.png", destination: "/Tinder-for-Horses-cover-image.png" },
       { source: "/TFH/Tinder-for-Horses-background.png", destination: "/Tinder-for-Horses-background.png" },
-      { source: "/TFH/tinder-for-horses%20introsong.mp3", destination: "/tinder-for-horses%20introsong.mp3" },
-      { source: "/TFH/tinder-for-horses introsong.mp3", destination: "/tinder-for-horses introsong.mp3" },
       { source: "/TFH/horse_holding_a_fish.png", destination: "/horse_holding_a_fish.png" },
       { source: "/TFH/horse_in_a_gym.png", destination: "/horse_in_a_gym.png" },
       { source: "/TFH/horse_on_a_hike.png", destination: "/horse_on_a_hike.png" },
@@ -93,8 +88,6 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               [
                 "img-src 'self' data: blob:",
-                "https://images.unsplash.com",
-                "https://plus.unsplash.com",
                 "https://api.deepai.org",
                 "https://*.vercel-storage.com",
                 "https://blob.vercel-storage.com",
@@ -113,7 +106,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/:all*(png|jpg|jpeg|gif|webp|svg|mp3)",
+        source: "/:all*(png|jpg|jpeg|gif|webp|svg)",
         headers: [
           { key: "Cache-Control", value: "public, max-age=604800, s-maxage=31536000, immutable" },
         ],

@@ -36,7 +36,7 @@ Second Horse Dating (Tinder‑for‑Horses)
   - `api/health/route.ts`: Minimal JSON health endpoint
 - `src/lib`: Domain utilities and data (`horses.ts`, `tfh.ts`, `git.ts`, etc.)
 - `src/types`: Local type shims
-- `public/TFH`: Static images and audio used by the UI
+- `public/TFH`: Static images used by the UI
 - `scripts/`: Dev utilities (`clean.mjs`, `reset.mjs`)
 - `tests/`: Vitest tests (e.g., seed data validation)
 - `v2/`: Reference only; do not depend on it
@@ -147,6 +147,9 @@ Security note: a previously committed `.env.local` has been removed from the rep
 - **Stale build cache**: Error like `Cannot find module './586.js'` → `npm run clean` then `npm run dev`. If it persists: `npm run reset`.
 - **Node version**: Use Node `>= 20.9`.
 - **Asset paths**: If images 404, verify `public/TFH` exists and Next rewrites are active.
+
+**License**
+- Code and assets in this repo are available under the [MIT License](./LICENSE). Keep the copyright notice intact when you reuse or re-publish so credit stays with Sam van Noord.
 
 **Suggested Improvements**
 - Testing

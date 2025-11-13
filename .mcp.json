@@ -9,6 +9,13 @@
         "$CONTEXT7_API_KEY"
       ]
     },
+    "backlog": {
+      "command": "backlog",
+      "args": [
+        "mcp",
+        "start"
+      ]
+    },
     "next-devtools": {
       "command": "C:\\Program Files\\nodejs\\npx.cmd",
       "args": [
