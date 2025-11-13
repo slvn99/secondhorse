@@ -109,6 +109,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               . Created on {created}.
             </p>
             <p className="text-[11px] leading-relaxed text-neutral-400">
+              <a
+                href="https://github.com/slvn99/secondhorse"
+                className="underline hover:text-neutral-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View the source on GitHub
+              </a>
+            </p>
+            <p className="text-[11px] leading-relaxed text-neutral-400">
               <a href="/privacy" className="underline hover:text-neutral-200">Privacy note</a>
             </p>
             <p className="text-[11px] leading-relaxed text-neutral-400">
