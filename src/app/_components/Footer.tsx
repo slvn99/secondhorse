@@ -40,11 +40,17 @@ export default function Footer({ currentYear }: FooterProps) {
     >
       <div className="mx-auto flex flex-col sm:flex-row sm:h-12 max-w-6xl items-center justify-center sm:justify-between px-3 text-xs sm:text-sm py-2 gap-1 sm:gap-0">
         <div className="flex items-center gap-2">
-          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">SLVN</a>
-          <span className="text-neutral-500">•</span>
-          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">&copy; {currentYear}</a>
-          <span className="hidden sm:inline text-neutral-500">•</span>
-          <span className="hidden sm:inline">All rights reserved</span>
+          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">
+            SLVN
+          </a>
+          <span className="text-neutral-500" aria-hidden="true">&bull;</span>
+          <a href="https://samvannoord.nl" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" title="samvannoord.nl">
+            &copy; {currentYear}
+          </a>
+          <span className="hidden sm:inline text-neutral-500" aria-hidden="true">&bull;</span>
+          <a href="/LICENSE" className="hidden sm:inline hover:text-white transition-colors">
+            MIT License
+          </a>
         </div>
         <div className="hidden sm:flex items-center gap-4">
           <a href="mailto:info@samvannoord.nl" className="hover:text-white transition-colors">
@@ -69,15 +75,15 @@ export default function Footer({ currentYear }: FooterProps) {
           <a href="mailto:info@samvannoord.nl" className="hover:text-white transition-colors">
             info@samvannoord.nl
           </a>
-          <span className="text-neutral-500">•</span>
+          <span className="text-neutral-500" aria-hidden="true">&bull;</span>
           <a href="tel:+31628147619" className="hover:text-white transition-colors">
             +31 6 - 2814 7619
           </a>
         </div>
         {/* Mobile rights text */}
-        <div className="sm:hidden text-[11px] text-neutral-400">
-          All rights reserved
-        </div>
+        <a href="/LICENSE" className="sm:hidden text-[11px] text-neutral-400 hover:text-white transition-colors">
+          MIT License
+        </a>
       </div>
     </footer>
   );

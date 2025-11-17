@@ -23,6 +23,14 @@ const voteRequestSchema = z.object({
     .optional(),
 }) satisfies z.ZodType<VoteRequestPayload>;
 
+function safeRevalidateTag(...args: Parameters<typeof revalidateTag>) {
+  try {
+    revalidateTag(...args);
+  } catch {
+    // Ignore when static generation store is unavailable (e.g., during unit tests)
+  }
+}
+
 function problemJson(status: number, message: string, details?: Record<string, unknown>) {
   return NextResponse.json(
     { error: { message, ...(details ?? {}) } },
@@ -114,8 +122,8 @@ export async function POST(request: Request, context: any) {
       timestamp: now,
     });
 
-    revalidateTag("horses", "max");
-    revalidateTag("leaderboard", "max");
+    safeRevalidateTag("horses", "max");
+    safeRevalidateTag("leaderboard", "max");
 
     return NextResponse.json({
       totals: serializeVoteTotals(totals),

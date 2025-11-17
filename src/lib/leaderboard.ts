@@ -100,10 +100,26 @@ function toLeaderboardEntries(
   });
 }
 
+function safeCacheLife(key: string) {
+  try {
+    cacheLife(key);
+  } catch {
+    // Swallow when cache APIs are unavailable (e.g., tests without cacheComponents)
+  }
+}
+
+function safeCacheTag(key: string) {
+  try {
+    cacheTag(key);
+  } catch {
+    // Swallow when cache APIs are unavailable (e.g., tests without cacheComponents)
+  }
+}
+
 export async function generateLeaderboard(options: GenerateOptions = {}): Promise<LeaderboardResponse> {
   "use cache";
-  cacheLife("leaderboard");
-  cacheTag("leaderboard");
+  safeCacheLife("leaderboard");
+  safeCacheTag("leaderboard");
   const { limit = 25, sql, databaseUrl } = options;
   const client = sql ?? (databaseUrl ? (neon(databaseUrl) as unknown as SqlClient) : undefined);
 

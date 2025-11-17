@@ -9,6 +9,14 @@ import { rateLimit } from "../_lib/rateLimit";
 import { normalizeAndParse } from "./validation";
 import NewFormClient from "./NewFormClient";
 
+function safeRevalidateTag(...args: Parameters<typeof revalidateTag>) {
+  try {
+    revalidateTag(...args);
+  } catch {
+    // Ignore when static generation store is unavailable (e.g., during unit tests)
+  }
+}
+
 export const metadata: Metadata = {
   title: "Add Horse Profile",
   description: "Create a new horse profile with photos.",
@@ -238,8 +246,8 @@ async function create(formData: FormData) {
       } catch {}
     }
 
-    revalidateTag("horses", "max");
-    revalidateTag("leaderboard", "max");
+    safeRevalidateTag("horses", "max");
+    safeRevalidateTag("leaderboard", "max");
 
     await setNotice("success", `Profile \"${display_name}\" created.${attemptedFileUpload && fileUploadFailed ? ' (image upload unavailable)' : ''}`);
     redirect("/");
